@@ -2,7 +2,7 @@ CC = clang
 
 CFLAGS = -std=c17 -Wall -Wextra -Wpedantic -g \
 	-O0 -fsanitize=address,undefined \
-	-MMD -MP
+	-MMD -MP -Iinclude
 
 SRC = $(shell find src -name '*.c')
 OBJ = $(SRC:src/%.c=build/%.o)
