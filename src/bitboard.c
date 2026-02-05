@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "bitboard.h"
 
+const char* piece_symbols = "PNBRQKpnbrqk";
+
 void init_board(Board *b) {
 	memset(b, 0, sizeof(*b));
 	
@@ -50,6 +52,24 @@ void init_board(Board *b) {
 	b->all = (b->occupied[WHITE] | b->occupied[BLACK]);
 }
 
+char get_piece_symbol_on_sq(Board *b, int sq) {
+	Bitboard all = b->occupied[WHITE] | b->occupied[BLACK];
+	if (bb_test(all, sq) == 0) {
+		return '_';
+	}
+
+	for (int color = 0; color < COLOR_NB; color++) {
+		for (int piece = 0; piece < PIECE_NB; piece++) {
+			if (bb_test(b->pieces[color][piece], sq) == 1) {
+				return piece_symbols[PIECE_NB * color + piece];
+			}
+		}
+	}
+
+	fprintf(stderr, "square: %d is not empty and no piece is on it\n", sq);
+	return '\0';
+}
+
 void bb_print(Bitboard bb) {	
 	for (int rank = RANK_NB - 1; rank >= 0; rank--) {
 		for (int file = 0; file < FILE_NB; file++) {
@@ -60,4 +80,8 @@ void bb_print(Bitboard bb) {
 		
 		printf("\n");
 	}
+}
+
+bool bb_test(Bitboard bb, int sq) {
+	return (bb & (1ULL << sq)) > 0;
 }
