@@ -16,13 +16,20 @@ typedef enum {
 } Color;
 
 typedef enum {
-	PAWN,
-	KNIGHT,
-	BISHOP,
-	ROOK,
-	QUEEN,
-	KING,
-	PIECE_NB
+	WHITE_PAWN,
+	WHITE_KNIGHT,
+	WHITE_BISHOP,
+	WHITE_ROOK,
+	WHITE_QUEEN,
+	WHITE_KING,
+	BLACK_PAWN,
+	BLACK_KNIGHT,
+	BLACK_BISHOP,
+	BLACK_ROOK,
+	BLACK_QUEEN,
+	BLACK_KING,
+	PIECE_NB,
+	NO_PIECE
 } Piece;
 
 typedef enum {
@@ -40,12 +47,14 @@ typedef enum {
 extern const char* piece_symbols;
 
 typedef struct {
-	Bitboard pieces[COLOR_NB][PIECE_NB];
+	Bitboard pieces[PIECE_NB];
 	Bitboard occupied[COLOR_NB];
-	Bitboard all;
+	Color side_to_move;
 } Board;
 
 void init_board(Board *b);
-char get_piece_symbol_on_sq(const Board *b, int sq);
+char piece_symbol_of(Piece piece);
+Color piece_color_of(Piece piece);
+Piece piece_on_sq(const Board *b, Square sq);
 
 #endif
