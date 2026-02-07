@@ -1,12 +1,13 @@
-#ifndef DEFS_H
-#define DEFS_H
+#ifndef BOARD_H
+#define BOARD_H
 
-#include <stdint.h>
+#include "bitboard.h"
 
 #define RANK_NB 8
 #define FILE_NB 8
 
-typedef uint64_t Bitboard;
+#define RANK_2 0x000000000000FF00ULL
+#define RANK_7 0x00FF000000000000ULL
 
 typedef enum {
 	WHITE,
@@ -22,7 +23,7 @@ typedef enum {
 	QUEEN,
 	KING,
 	PIECE_NB
-} PieceType;
+} Piece;
 
 typedef enum {
 	A1, B1, C1, D1, E1, F1, G1, H1,
@@ -36,5 +37,15 @@ typedef enum {
 	SQ_NB
 } Square;
 
+extern const char* piece_symbols;
+
+typedef struct {
+	Bitboard pieces[COLOR_NB][PIECE_NB];
+	Bitboard occupied[COLOR_NB];
+	Bitboard all;
+} Board;
+
+void init_board(Board *b);
+char get_piece_symbol_on_sq(const Board *b, int sq);
 
 #endif
