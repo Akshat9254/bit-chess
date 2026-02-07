@@ -48,6 +48,43 @@ void init_board(Board *b) {
 	
 	b->pieces[BLACK_KING] = (1ULL << E8);
 	b->occupied[BLACK] |= b->pieces[BLACK_KING];
+
+	b->side_to_move = WHITE;
+}
+
+void clear_board(Board *b) {
+    for (Piece piece = 0; piece < PIECE_NB; piece++) {
+        b->pieces[piece] = 0;
+    }
+
+    b->occupied[WHITE] = b->occupied[BLACK] = 0;
+    b->side_to_move = WHITE;
+}
+
+void place_piece_on_sq(Board *board, Piece piece, Square sq) {
+	if (sq < 0 || sq >= SQ_NB) {
+		return;
+	}
+
+	Color piece_color = piece_color_of(piece);
+	if (bb_test(board->occupied[WHITE] | board->occupied[BLACK], sq)) {
+		return;
+	}
+
+	bb_set(&board->pieces[piece], sq);
+	bb_set(&board->occupied[piece_color], sq);
+}
+
+void clear_sq(Board *board, Square sq) {
+	Piece piece = piece_on_sq(board, sq);
+
+	if (piece == NO_PIECE) {
+		return;
+	}
+
+	Color piece_color = piece_color_of(piece);
+	bb_clear(&board->pieces[piece], sq);
+	bb_clear(&board->occupied[piece_color], sq);
 }
 
 inline char piece_symbol_of(Piece piece) {
