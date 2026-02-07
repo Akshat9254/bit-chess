@@ -11,10 +11,15 @@ OBJ = $(SRC:src/%.c=build/%.o)
 SRC_LIB = $(filter-out src/main.c,$(SRC))
 OBJ_LIB = $(SRC_LIB:src/%.c=build/%.o)
 
-# Tests
+# --- Test Logic Changes Start Here ---
+
+# Find all test source files
 TEST_SRC = $(shell find tests -name '*.c' 2>/dev/null)
-TEST_OBJ = $(TEST_SRC:tests/%.c=build/tests/%.o)
-TEST_BIN = build/tests/run_tests
+
+# Define individual binaries for each test (e.g., build/tests/bitboard_test)
+TEST_BINS = $(TEST_SRC:tests/%.c=build/tests/%)
+
+# --- End of Changes ---
 
 BIN = build/chess
 
@@ -27,17 +32,13 @@ build/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Build test objects
-build/tests/%.o: tests/%.c
+# Pattern rule: How to build each individual test binary
+# It links the specific test .c file with your library objects
+build/tests/%: tests/%.c $(OBJ_LIB)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Link test binary
-$(TEST_BIN): $(OBJ_LIB) $(TEST_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@
 
 -include $(OBJ:.o=.d)
--include $(TEST_OBJ:.o=.d)
 
 .PHONY: clean test run
 
@@ -47,6 +48,13 @@ clean:
 run: all
 	./$(BIN)
 
-# Run unit tests
-test: $(TEST_BIN)
-	./$(TEST_BIN)
+# Run all unit tests sequentially
+test: $(TEST_BINS)
+	@for test in $(TEST_BINS); do \
+		echo "Executing $$test..."; \
+		./$$test || exit 1; \
+	done
+	@echo "All tests passed successfully!"
+
+greet:
+	@echo "Hello, $(NAME)"
