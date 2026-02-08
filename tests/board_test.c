@@ -68,7 +68,7 @@ static void test_init_board_all_bitboard(void) {
     init_board(&b);
 
     Bitboard expected_all = rank_mask(0) | RANK_2 | RANK_7 | rank_mask(7);
-    Bitboard actual_all = b.occupied[WHITE] | b.occupied[BLACK];
+    Bitboard actual_all = board_occupancy(&b);
 
     assert(actual_all == expected_all);
 }
