@@ -5,6 +5,7 @@
 
 #define RANK_NB 8
 #define FILE_NB 8
+#define PIECES_PER_SIDE 6
 
 #define RANK_2 0x000000000000FF00ULL
 #define RANK_7 0x00FF000000000000ULL
@@ -41,7 +42,7 @@ typedef enum {
 	A6, B6, C6, D6, E6, F6, G6, H6,
 	A7, B7, C7, D7, E7, F7, G7, H7,
 	A8, B8, C8, D8, E8, F8, G8, H8,
-	SQ_NB
+	SQ_NB, NO_SQ
 } Square;
 
 extern const char* piece_symbols;
@@ -57,10 +58,14 @@ void clear_board(Board *b);
 void place_piece_on_sq(Board *board, Piece piece, Square sq);
 void clear_sq(Board *board, Square sq);
 bool is_valid_sq(Square sq);
+uint8_t rank_of_sq(Square sq);
+char file_of_sq(Square sq);
+Square to_sq(uint8_t rank, char file);
 char piece_symbol_of(Piece piece);
 Color piece_color_of(Piece piece);
 Piece piece_on_sq(const Board *b, Square sq);
 Bitboard board_occupancy(const Board *board);
 Bitboard enemy_board_occupancy(const Board *board);
+Bitboard current_side_occupancy(const Board *board);
 
 #endif

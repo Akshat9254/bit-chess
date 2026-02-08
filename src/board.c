@@ -80,6 +80,19 @@ inline bool is_valid_sq(Square sq) {
 	return sq >= 0 && sq < SQ_NB;
 }
 
+inline uint8_t rank_of_sq(Square sq) {
+	return 1 + (sq / FILE_NB);
+}
+
+inline char file_of_sq(Square sq) {
+	return 'A' + (sq % FILE_NB);
+}
+
+inline Square to_sq(uint8_t rank, char file) {
+	Square sq = (rank - 1) * FILE_NB + (file - 'A');
+	return is_valid_sq(sq) ? sq : NO_SQ;
+}
+
 inline char piece_symbol_of(Piece piece) {
 	return piece_symbols[piece];
 }
@@ -111,4 +124,8 @@ inline Bitboard board_occupancy(const Board *board) {
 inline Bitboard enemy_board_occupancy(const Board *board) {
 	Color enemy_color = board->side_to_move ^ 1;
 	return board->occupied[enemy_color];
+}
+
+inline Bitboard current_side_occupancy(const Board *board) {
+	return board->occupied[board->side_to_move];
 }
