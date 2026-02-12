@@ -44,10 +44,12 @@ void init_board(Board *board) {
 	place_piece_on_sq(board, BLACK_KING, E8);
 
 	board->side_to_move = WHITE;
+	board->enpassant_sq = NO_SQ;
 }
 
 inline void clear_board(Board *board) {
     memset(board, 0, sizeof(*board));
+	board->enpassant_sq = NO_SQ;
 }
 
 void place_piece_on_sq(Board *board, Piece piece, Square sq) {

@@ -11,6 +11,7 @@ typedef struct {
     Square to;
     Piece piece;
     Piece captured_piece;
+    Piece promotion;
     uint8_t flags;
 } Move;
 
@@ -21,7 +22,10 @@ typedef struct {
 
 enum {
     MOVE_QUIET   = 0,
-    MOVE_CAPTURE = 1 << 0
+    MOVE_CAPTURE = 1 << 0,
+    MOVE_PAWN_PROMOTION = 1 << 1,
+    MOVE_DOUBLE_PAWN = 1 << 2,
+    MOVE_ENPASSANT = 1 << 3
 };
 
 void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list);

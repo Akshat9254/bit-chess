@@ -10,6 +10,9 @@ static void generate_bishop_moves(const Board *board, Piece piece, Square sq, Mo
 static void generate_rook_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
 static void generate_queen_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
 static void generate_king_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
+static void add_pawn_promotion_moves(const Board *board, Square from, Square to, uint8_t extra_flags, MoveList *move_list);
+static void add_move(const Board *board, Square from, Square to, uint8_t extra_flags, MoveList *move_list);
+static void add_enpassant_move(const Board *board, Square from, Piece captured_piece, MoveList *move_list);
 
 void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) {
     Piece piece = piece_on_sq(board, sq);
@@ -55,33 +58,77 @@ void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) 
 }
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square sq, MoveList *move_list) {
-    
+    uint8_t rank = rank_of_sq(sq);
+    char file = file_of_sq(sq);
+
+    int8_t single_push_dir = board->side_to_move == WHITE ? 8 : -8;
+    uint8_t start_rank = board->side_to_move == WHITE ? 2 : 7;
+    uint8_t promotion_rank = board->side_to_move == WHITE ? 7 : 2;
+
+    Square to = sq + single_push_dir;
+    Bitboard all_occ = board_occupancy(board);
+    Bitboard enemy_occ = enemy_board_occupancy(board);
+
+    if (!bb_test(all_occ, to)) {
+        if (rank == promotion_rank) {
+            add_pawn_promotion_moves(board, sq, to, MOVE_QUIET, move_list);
+        } else {
+            add_move(board, sq, to, MOVE_QUIET, move_list);
+
+            Square to2 = sq + single_push_dir * 2;
+            if (rank == start_rank && !bb_test(all_occ, to2)) {
+                add_move(board, sq, to2, MOVE_QUIET | MOVE_DOUBLE_PAWN, move_list);
+            }
+        }
+    }
+
+    // left capture
+    if (file > 'A') {
+        Square to = sq + single_push_dir - 1;
+        if (bb_test(enemy_occ, to)) {
+            if (rank == promotion_rank) {
+                add_pawn_promotion_moves(board, sq, to, MOVE_CAPTURE, move_list);
+            } else {
+                add_move(board, sq, to, MOVE_CAPTURE, move_list);
+            }
+        }
+
+        if (to == board->enpassant_sq) {
+            add_enpassant_move(board, sq, piece_on_sq(board, sq - 1), move_list);
+        }
+    }
+
+    // right capture
+    if (file < 'H') {
+        Square to = sq + single_push_dir + 1;
+        if (bb_test(enemy_occ, to)) {
+            if (rank == promotion_rank) {
+                add_pawn_promotion_moves(board, sq, to, MOVE_CAPTURE, move_list);
+            } else {
+                add_move(board, sq, to, MOVE_CAPTURE, move_list);
+            }
+        }
+
+        if (to == board->enpassant_sq) {
+            add_enpassant_move(board, sq, piece_on_sq(board, sq + 1), move_list);
+        }
+    }
 }
 
 static void generate_knight_moves(const Board *board, Piece piece, Square sq, MoveList *move_list) {
+    Bitboard current_side_occ = current_side_occupancy(board);
     for (int index = 0; index < KNIGHT_MOVE_OFFSETS_SIZE; index++) {
-        int nextSq = sq + knight_move_offsets[index];
-        if (nextSq < 0 || nextSq >= SQ_NB) {
+        Square to  = sq + knight_move_offsets[index];
+        if (!is_valid_sq(to)) {
             continue;
         }
 
-        Square to = nextSq;
-        Piece piece_on_to = piece_on_sq(board, to);
-        if (piece_on_to != NO_PIECE && piece_color_of(piece_on_to) == board->side_to_move) {
+        if (bb_test(current_side_occ, to)) {
             continue;
         }
-
-        uint8_t flags = piece_on_to == NO_PIECE ? MOVE_QUIET : MOVE_CAPTURE;
-
-        Move move = {
-            .from = sq,
-            .to = to,
-            .piece = piece_on_sq(board, sq),
-            .captured_piece = piece_on_to,
-            .flags = flags
-        };
-
-        move_list->moves[move_list->count++] = move;
+        
+        uint8_t flags = piece_on_sq(board, to) == NO_PIECE ? MOVE_QUIET : MOVE_CAPTURE;
+        add_move(board, sq, to, flags, move_list);
     }
 }
 
@@ -99,4 +146,48 @@ static void generate_queen_moves(const Board *board, Piece pice, Square sq, Move
 
 static void generate_king_moves(const Board *board, Piece pice, Square sq, MoveList *move_list) {
 
+}
+
+static void add_pawn_promotion_moves(const Board *board, Square from, Square to, uint8_t extra_flags, MoveList *move_list) {
+    Piece promotion_option_start = WHITE_KNIGHT + (board->side_to_move * PIECES_PER_SIDE);
+    Piece promotion_option_end = WHITE_QUEEN + (board->side_to_move * PIECES_PER_SIDE);
+
+    for (Piece promotion = promotion_option_start; promotion <= promotion_option_end; promotion++) {
+        Move move = {
+            .from = from,
+            .to = to,
+            .piece = piece_on_sq(board, from),
+            .captured_piece = piece_on_sq(board, to),
+            .promotion = promotion,
+            .flags = (MOVE_PAWN_PROMOTION | extra_flags)
+        };
+
+        move_list->moves[move_list->count++] = move;
+    }
+}
+
+static void add_move(const Board *board, Square from, Square to, uint8_t flags, MoveList *move_list) {
+    Move move = {
+        .from = from,
+        .to = to,
+        .piece = piece_on_sq(board, from),
+        .captured_piece = piece_on_sq(board, to),
+        .promotion = NO_PIECE,
+        .flags = flags
+    };
+
+    move_list->moves[move_list->count++] = move;
+}
+
+static void add_enpassant_move(const Board *board, Square from, Piece captured_piece, MoveList *move_list) {
+    Move move = {
+        .from = from,
+        .to = board->enpassant_sq,
+        .piece = piece_on_sq(board, from),
+        .captured_piece = captured_piece,
+        .promotion = NO_PIECE,
+        .flags = (MOVE_CAPTURE | MOVE_ENPASSANT)
+    };
+
+    move_list->moves[move_list->count++] = move;
 }

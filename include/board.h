@@ -51,6 +51,7 @@ typedef struct {
 	Bitboard pieces[PIECE_NB];
 	Bitboard occupied[COLOR_NB];
 	Color side_to_move;
+	Square enpassant_sq;
 } Board;
 
 void init_board(Board *b);
