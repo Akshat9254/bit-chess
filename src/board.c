@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "board.h"
-#include "utils.h"
 
 const char* piece_symbols = "PNBRQKpnbrqk__";
 

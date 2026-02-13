@@ -59,6 +59,8 @@ void clear_board(Board *b);
 void place_piece_on_sq(Board *board, Piece piece, Square sq);
 void clear_sq(Board *board, Square sq);
 bool is_valid_sq(Square sq);
+
+/* helpers */
 uint8_t rank_of_sq(Square sq);
 char file_of_sq(Square sq);
 uint8_t rank_dist(Square sq1, Square sq2);
