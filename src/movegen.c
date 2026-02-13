@@ -6,11 +6,13 @@
 #define BISHOP_MOVE_OFFSETS_SIZE 4
 #define ROOK_MOVE_OFFSETS_SIZE 4
 #define QUEEN_MOVE_OFFSETS_SIZE 8
+#define KING_MOVE_OFFSETS_SIZE 8
 
 const int8_t knight_move_offsets[] = {-17, -15, -10, -6, 6, 10, 15, 17};
 const int8_t bishop_move_offsets[] = {-9, -7, 7, 9};
 const int8_t rook_move_offsets[] = {-8, -1, 1, 8};
 const int8_t queen_move_offsets[] = {-9, -8, -7, -1, 1, 7, 8, 9};
+const int8_t king_move_offsets[] = {-9, -8, -7, -1, 1, 7, 8, 9};
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
 static void generate_knight_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
@@ -155,7 +157,20 @@ static void generate_queen_moves(const Board *board, Piece piece, Square sq, Mov
 }
 
 static void generate_king_moves(const Board *board, Piece piece, Square sq, MoveList *move_list) {
+    Bitboard all_occ = board_occupancy(board);
+    Bitboard enemy_occ = enemy_board_occupancy(board);
+    for (int8_t i = 0; i < KING_MOVE_OFFSETS_SIZE; i++) {
+        Square to = sq + king_move_offsets[i];
+        if (!is_valid_sq(sq)) {
+            continue;
+        }
 
+        if (!bb_test(all_occ, to)) {
+            add_move(board, sq, to, MOVE_QUIET, move_list);
+        } else if (bb_test(enemy_occ, to)) {
+            add_move(board, sq, to, MOVE_CAPTURE, move_list);
+        }
+    }
 }
 
 static void add_pawn_promotion_moves(const Board *board, Square from, Square to, uint8_t extra_flags, MoveList *move_list) {
