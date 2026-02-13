@@ -88,7 +88,7 @@ inline uint8_t rank_of_sq(Square sq) {
 }
 
 inline char file_of_sq(Square sq) {
-	return 'A' + (sq % FILE_NB);
+	return 'a' + (sq % FILE_NB);
 }
 
 uint8_t rank_dist(Square sq1, Square sq2) {

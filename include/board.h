@@ -9,6 +9,8 @@
 
 #define RANK_2 0x000000000000FF00ULL
 #define RANK_7 0x00FF000000000000ULL
+#define FILE_A 'a'
+#define FILE_H 'h'
 
 typedef enum {
 	WHITE,

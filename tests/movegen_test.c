@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include "movegen.h"
 
 static void test_generate_knight_moves(void) {
@@ -197,6 +198,35 @@ static void test_generate_king_moves(void) {
     assert(move_list.count == 7);
 }
 
+static void test_move_to_string(void) {
+    char str[6];
+    Move regular_move = {
+        .from = B1,
+        .to = C3,
+        .piece = WHITE_KNIGHT,
+        .captured_piece = NO_PIECE,
+        .promotion = NO_PIECE,
+        .flags = (MOVE_QUIET | MOVE_DOUBLE_PAWN)
+    };
+
+    move_to_string(&regular_move, str);
+
+    assert(strcmp(str, "b1c3") == 0);
+
+    Move pawn_promotion_move = {
+        .from = F2,
+        .to = F1,
+        .piece = BLACK_PAWN,
+        .captured_piece = NO_PIECE,
+        .promotion = BLACK_QUEEN,
+        .flags = (MOVE_QUIET | MOVE_PAWN_PROMOTION)
+    };
+
+    move_to_string(&pawn_promotion_move, str);
+
+    assert(strcmp(str, "f2f1q") == 0);
+}
+
 int main(void) {
     test_generate_knight_moves();
     test_generate_pawn_regular_moves();
@@ -204,6 +234,7 @@ int main(void) {
     test_generate_rook_moves();
     test_generate_queen_moves();
     test_generate_king_moves();
+    test_move_to_string();
     printf("✅ All tests in movegen_test.c passed.\n");
     return 0;
 }

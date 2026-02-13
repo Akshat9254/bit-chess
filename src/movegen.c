@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "movegen.h"
 #include "board.h"
 
@@ -69,6 +70,20 @@ void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) 
     }
 }
 
+void move_to_string(Move *move, char *str) {
+    char from_file = file_of_sq(move->from);
+    char from_rank = '0' + rank_of_sq(move->from);
+    char to_file = file_of_sq(move->to);
+    char to_rank = '0' + rank_of_sq(move->to);
+
+    if (move->flags & MOVE_PAWN_PROMOTION) {
+        Piece promotion = piece_symbol_of(move->promotion);
+        snprintf(str, sizeof(str), "%c%c%c%c%c", from_file, from_rank, to_file, to_rank, promotion);
+    } else {
+        snprintf(str, sizeof(str), "%c%c%c%c", from_file, from_rank, to_file, to_rank);
+    }
+}
+
 static void generate_pawn_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
     uint8_t rank = rank_of_sq(from);
     char file = file_of_sq(from);
@@ -95,7 +110,7 @@ static void generate_pawn_moves(const Board *board, Piece piece, Square from, Mo
     }
 
     // left capture
-    if (file > 'A') {
+    if (file > FILE_A) {
         Square to = from + single_push_dir - 1;
         if (bb_test(enemy_occ, to)) {
             if (rank == promotion_rank) {
@@ -111,7 +126,7 @@ static void generate_pawn_moves(const Board *board, Piece piece, Square from, Mo
     }
 
     // right capture
-    if (file < 'H') {
+    if (file < FILE_H) {
         Square to = from + single_push_dir + 1;
         if (bb_test(enemy_occ, to)) {
             if (rank == promotion_rank) {
