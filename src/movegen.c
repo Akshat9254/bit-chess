@@ -1,13 +1,14 @@
-#include <stdio.h>
 #include "movegen.h"
 #include "board.h"
 #include "utils.h"
 
 #define KNIGHT_MOVE_OFFSETS_SIZE 8
 #define BISHOP_MOVE_OFFSETS_SIZE 4
+#define ROOK_MOVE_OFFSETS_SIZE 4
 
 const int8_t knight_move_offsets[] = {-17, -15, -10, -6, 6, 10, 15, 17};
-const int8_t bishop_move_offsets[] = {-9, -7, 7, 9}; 
+const int8_t bishop_move_offsets[] = {-9, -7, 7, 9};
+const int8_t rook_move_offsets[] = {-8, -1, 1, 8};
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
 static void generate_knight_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
@@ -144,7 +145,7 @@ static void generate_bishop_moves(const Board *board, Piece piece, Square sq, Mo
 }
 
 static void generate_rook_moves(const Board *board, Piece piece, Square sq, MoveList *move_list) {
-
+    add_sliding_moves(board, sq, piece, rook_move_offsets, ROOK_MOVE_OFFSETS_SIZE, move_list);
 }
 
 static void generate_queen_moves(const Board *board, Piece pice, Square sq, MoveList *move_list) {
