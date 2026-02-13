@@ -166,11 +166,28 @@ static void test_generate_rook_moves(void) {
     assert(move_list.count == 8);
 }
 
+static void test_generate_queen_moves(void) {
+    Board board;
+    clear_board(&board);
+    place_piece_on_sq(&board, WHITE_QUEEN, D3);
+    place_piece_on_sq(&board, BLACK_KNIGHT, B5);
+    place_piece_on_sq(&board, WHITE_ROOK, G3);
+
+    MoveList move_list;
+    move_list.count = 0;
+    board.side_to_move = WHITE;
+
+    generate_moves_from_sq(&board, D3, &move_list);
+
+    assert(move_list.count == 22);
+}
+
 int main(void) {
     test_generate_knight_moves();
     test_generate_pawn_regular_moves();
     test_generate_bishop_moves();
     test_generate_rook_moves();
+    test_generate_queen_moves();
     printf("✅ All tests in movegen_test.c passed.\n");
     return 0;
 }
