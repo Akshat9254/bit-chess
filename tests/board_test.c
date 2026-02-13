@@ -14,13 +14,13 @@ static Bitboard rank_mask(int rank) {
 static void test_init_board_white_pawns(void) {
     Board b;
     init_board(&b);
-    assert(b.pieces[WHITE_PAWN] == RANK_2);
+    assert(b.pieces[WHITE_PAWN] == RANK_2_MASK);
 }
 
 static void test_init_board_black_pawns(void) {
     Board b;
     init_board(&b);
-    assert(b.pieces[BLACK_PAWN] == RANK_7);
+    assert(b.pieces[BLACK_PAWN] == RANK_7_MASK);
 }
 
 static void test_init_board_white_pieces(void) {
@@ -39,7 +39,7 @@ static void test_init_board_white_pieces(void) {
     assert(b.pieces[WHITE_QUEEN]  == queen);
     assert(b.pieces[WHITE_KING]   == king);
 
-    Bitboard expected_occ = rank_mask(0) | RANK_2;
+    Bitboard expected_occ = rank_mask(0) | RANK_2_MASK;
     assert(b.occupied[WHITE] == expected_occ);
 }
 
@@ -59,7 +59,7 @@ static void test_init_board_black_pieces(void) {
     assert(b.pieces[BLACK_QUEEN]  == queen);
     assert(b.pieces[BLACK_KING]   == king);
 
-    Bitboard expected_occ = rank_mask(7) | RANK_7;
+    Bitboard expected_occ = rank_mask(7) | RANK_7_MASK;
     assert(b.occupied[BLACK] == expected_occ);
 }
 
@@ -67,7 +67,7 @@ static void test_init_board_all_bitboard(void) {
     Board b;
     init_board(&b);
 
-    Bitboard expected_all = rank_mask(0) | RANK_2 | RANK_7 | rank_mask(7);
+    Bitboard expected_all = rank_mask(0) | RANK_2_MASK | RANK_7_MASK | rank_mask(7);
     Bitboard actual_all = board_occupancy(&b);
 
     assert(actual_all == expected_all);

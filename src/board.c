@@ -9,10 +9,10 @@ void init_board(Board *board) {
 	clear_board(board);
 	
 	/* pawns */
-	board->pieces[WHITE_PAWN] = RANK_2;
+	board->pieces[WHITE_PAWN] = RANK_2_MASK;
 	board->occupied[WHITE] |= board->pieces[WHITE_PAWN];
 
-	board->pieces[BLACK_PAWN] = RANK_7;
+	board->pieces[BLACK_PAWN] = RANK_7_MASK;
 	board->occupied[BLACK] |= board->pieces[BLACK_PAWN];
 	
 	/* knights */
