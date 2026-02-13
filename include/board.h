@@ -61,6 +61,8 @@ void clear_sq(Board *board, Square sq);
 bool is_valid_sq(Square sq);
 uint8_t rank_of_sq(Square sq);
 char file_of_sq(Square sq);
+uint8_t rank_dist(Square sq1, Square sq2);
+uint8_t file_dist(Square sq1, Square sq2);
 Square to_sq(uint8_t rank, char file);
 char piece_symbol_of(Piece piece);
 Color piece_color_of(Piece piece);

@@ -1,8 +1,13 @@
+#include <stdio.h>
 #include "movegen.h"
 #include "board.h"
+#include "utils.h"
 
 #define KNIGHT_MOVE_OFFSETS_SIZE 8
+#define BISHOP_MOVE_OFFSETS_SIZE 4
+
 const int8_t knight_move_offsets[] = {-17, -15, -10, -6, 6, 10, 15, 17};
+const int8_t bishop_move_offsets[] = {-9, -7, 7, 9}; 
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
 static void generate_knight_moves(const Board *board, Piece piece, Square sq, MoveList *move_list);
@@ -13,6 +18,8 @@ static void generate_king_moves(const Board *board, Piece piece, Square sq, Move
 static void add_pawn_promotion_moves(const Board *board, Square from, Square to, uint8_t extra_flags, MoveList *move_list);
 static void add_move(const Board *board, Square from, Square to, uint8_t extra_flags, MoveList *move_list);
 static void add_enpassant_move(const Board *board, Square from, Piece captured_piece, MoveList *move_list);
+static void add_sliding_moves(const Board *board, Square from, Piece piece, 
+    const int8_t move_offsets[], int8_t move_offsets_size, MoveList *move_list);
 
 void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) {
     Piece piece = piece_on_sq(board, sq);
@@ -133,7 +140,7 @@ static void generate_knight_moves(const Board *board, Piece piece, Square sq, Mo
 }
 
 static void generate_bishop_moves(const Board *board, Piece piece, Square sq, MoveList *move_list) {
-
+    add_sliding_moves(board, sq, piece, bishop_move_offsets, BISHOP_MOVE_OFFSETS_SIZE, move_list);
 }
 
 static void generate_rook_moves(const Board *board, Piece piece, Square sq, MoveList *move_list) {
@@ -190,4 +197,28 @@ static void add_enpassant_move(const Board *board, Square from, Piece captured_p
     };
 
     move_list->moves[move_list->count++] = move;
+}
+
+static void add_sliding_moves(const Board *board, Square from, Piece piece, 
+    const int8_t move_offsets[], int8_t move_offsets_size, MoveList *move_list) {
+    Bitboard all_occ = board_occupancy(board);
+    Bitboard enemy_occ = enemy_board_occupancy(board);
+
+    for (int8_t i = 0; i < move_offsets_size; i++) {
+        Square prev = from;
+        Square to = prev + move_offsets[i];
+        while (is_valid_sq(to) && rank_dist(prev, to) <= 1 && file_dist(prev, to) <= 1) {
+            if (!bb_test(all_occ, to)) {
+                add_move(board, from, to, MOVE_QUIET, move_list);
+                prev = to;
+                to += move_offsets[i];
+            } else {
+                if (bb_test(enemy_occ, to)) {
+                    add_move(board, from, to, MOVE_CAPTURE, move_list);
+                }
+
+                break;
+            }
+        }
+    }
 }

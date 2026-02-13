@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "board.h"
+#include "utils.h"
 
 const char* piece_symbols = "PNBRQKpnbrqk__";
 
@@ -88,6 +89,16 @@ inline uint8_t rank_of_sq(Square sq) {
 
 inline char file_of_sq(Square sq) {
 	return 'A' + (sq % FILE_NB);
+}
+
+uint8_t rank_dist(Square sq1, Square sq2) {
+	int8_t dist = rank_of_sq(sq1) - rank_of_sq(sq2);
+	return abs(dist);
+}
+
+uint8_t file_dist(Square sq1, Square sq2) {
+	int8_t dist = file_of_sq(sq1) - file_of_sq(sq2);
+	return abs(dist);
 }
 
 inline Square to_sq(uint8_t rank, char file) {

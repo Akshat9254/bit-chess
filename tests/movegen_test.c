@@ -133,9 +133,26 @@ static void test_generate_pawn_regular_moves(void) {
     assert(moves_list.moves[1].flags == (MOVE_CAPTURE | MOVE_ENPASSANT));
 }
 
+static void test_generate_bishop_moves(void) {
+    Board board;
+    clear_board(&board);
+    place_piece_on_sq(&board, BLACK_BISHOP, C5);
+    place_piece_on_sq(&board, WHITE_PAWN, B6);
+    place_piece_on_sq(&board, BLACK_KNIGHT, E3);
+
+    MoveList move_list;
+    move_list.count = 0;
+    board.side_to_move = BLACK;
+
+    generate_moves_from_sq(&board, C5, &move_list);
+    
+    assert(move_list.count == 7);
+}
+
 int main(void) {
     test_generate_knight_moves();
     test_generate_pawn_regular_moves();
+    test_generate_bishop_moves();
     printf("✅ All tests in movegen_test.c passed.\n");
     return 0;
 }
