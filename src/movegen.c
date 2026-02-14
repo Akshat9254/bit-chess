@@ -177,7 +177,7 @@ static void generate_king_moves(const Board *board, Piece piece, Square from, Mo
     Bitboard enemy_occ = enemy_board_occupancy(board);
     for (int8_t i = 0; i < KING_MOVE_OFFSETS_SIZE; i++) {
         Square to = from + king_move_offsets[i];
-        if (!is_valid_sq(from)) {
+        if (!is_valid_sq(to)) {
             continue;
         }
 
