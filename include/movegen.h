@@ -29,6 +29,6 @@ enum {
 };
 
 void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list);
-void move_to_string(Move *move, char *str);
+void move_to_string(Move *move, char *str, size_t size);
 
 #endif

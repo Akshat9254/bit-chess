@@ -48,7 +48,7 @@ static void test_generate_knight_moves(void) {
     board.side_to_move = WHITE;
     moves_list.count = 0;
     generate_moves_from_sq(&board, A2, &moves_list);
-    
+
     assert(moves_list.count == 3);
 }
 
@@ -219,7 +219,7 @@ static void test_move_to_string(void) {
         .flags = (MOVE_QUIET | MOVE_DOUBLE_PAWN)
     };
 
-    move_to_string(&regular_move, str);
+    move_to_string(&regular_move, str, 6);
 
     assert(strcmp(str, "b1c3") == 0);
 
@@ -232,7 +232,7 @@ static void test_move_to_string(void) {
         .flags = (MOVE_QUIET | MOVE_PAWN_PROMOTION)
     };
 
-    move_to_string(&pawn_promotion_move, str);
+    move_to_string(&pawn_promotion_move, str, 6);
 
     assert(strcmp(str, "f2f1q") == 0);
 }

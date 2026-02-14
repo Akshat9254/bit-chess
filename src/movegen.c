@@ -72,7 +72,7 @@ void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) 
     }
 }
 
-void move_to_string(Move *move, char *str) {
+void move_to_string(Move *move, char *str, size_t size) {
     char from_file = 'a' + file_of_sq(move->from);
     char from_rank = '1' + rank_of_sq(move->from);
     char to_file = 'a' + file_of_sq(move->to);
@@ -80,9 +80,9 @@ void move_to_string(Move *move, char *str) {
 
     if (move->flags & MOVE_PAWN_PROMOTION) {
         Piece promotion = piece_symbol_of(move->promotion);
-        snprintf(str, sizeof(str), "%c%c%c%c%c", from_file, from_rank, to_file, to_rank, promotion);
+        snprintf(str, size, "%c%c%c%c%c", from_file, from_rank, to_file, to_rank, promotion);
     } else {
-        snprintf(str, sizeof(str), "%c%c%c%c", from_file, from_rank, to_file, to_rank);
+        snprintf(str, size, "%c%c%c%c", from_file, from_rank, to_file, to_rank);
     }
 }
 
