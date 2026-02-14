@@ -7,6 +7,8 @@ typedef uint64_t Bitboard;
 
 #define RANK_NB 8
 #define FILE_NB 8
+#define FILE_NB_LOG 3
+#define FILE_NB_REM_MASK 7
 #define PIECES_PER_SIDE 6
 
 #define RANK_2_MASK 0x000000000000FF00ULL

@@ -71,10 +71,10 @@ void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) 
 }
 
 void move_to_string(Move *move, char *str) {
-    char from_file = file_of_sq(move->from);
-    char from_rank = '0' + rank_of_sq(move->from);
-    char to_file = file_of_sq(move->to);
-    char to_rank = '0' + rank_of_sq(move->to);
+    char from_file = 'a' + file_of_sq(move->from);
+    char from_rank = '1' + rank_of_sq(move->from);
+    char to_file = 'a' + file_of_sq(move->to);
+    char to_rank = '1' + rank_of_sq(move->to);
 
     if (move->flags & MOVE_PAWN_PROMOTION) {
         Piece promotion = piece_symbol_of(move->promotion);
@@ -86,11 +86,11 @@ void move_to_string(Move *move, char *str) {
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
     uint8_t rank = rank_of_sq(from);
-    char file = file_of_sq(from);
+    uint8_t file = file_of_sq(from);
 
     int8_t single_push_dir = board->side_to_move == WHITE ? 8 : -8;
-    uint8_t start_rank = board->side_to_move == WHITE ? 2 : 7;
-    uint8_t promotion_rank = board->side_to_move == WHITE ? 7 : 2;
+    uint8_t start_rank = board->side_to_move == WHITE ? 1 : 6;
+    uint8_t promotion_rank = board->side_to_move == WHITE ? 6 : 1;
 
     Square to = from + single_push_dir;
     Bitboard all_occ = board_occupancy(board);
@@ -110,7 +110,7 @@ static void generate_pawn_moves(const Board *board, Piece piece, Square from, Mo
     }
 
     // left capture
-    if (file > FILE_A) {
+    if (file > 0) {
         Square to = from + single_push_dir - 1;
         if (bb_test(enemy_occ, to)) {
             if (rank == promotion_rank) {
@@ -126,7 +126,7 @@ static void generate_pawn_moves(const Board *board, Piece piece, Square from, Mo
     }
 
     // right capture
-    if (file < FILE_H) {
+    if (file < FILE_NB) {
         Square to = from + single_push_dir + 1;
         if (bb_test(enemy_occ, to)) {
             if (rank == promotion_rank) {

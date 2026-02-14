@@ -84,11 +84,11 @@ inline bool is_valid_sq(Square sq) {
 }
 
 inline uint8_t rank_of_sq(Square sq) {
-	return 1 + (sq / FILE_NB);
+	return (sq >> FILE_NB_LOG);
 }
 
-inline char file_of_sq(Square sq) {
-	return 'a' + (sq % FILE_NB);
+inline uint8_t file_of_sq(Square sq) {
+	return (sq & FILE_NB_REM_MASK);
 }
 
 uint8_t rank_dist(Square sq1, Square sq2) {
@@ -101,8 +101,8 @@ uint8_t file_dist(Square sq1, Square sq2) {
 	return abs(dist);
 }
 
-inline Square to_sq(uint8_t rank, char file) {
-	Square sq = (rank - 1) * FILE_NB + (file - 'A');
+inline Square to_sq(uint8_t rank, uint8_t file) {
+	Square sq = rank * FILE_NB + file;
 	return is_valid_sq(sq) ? sq : NO_SQ;
 }
 
