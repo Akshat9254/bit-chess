@@ -51,6 +51,11 @@ typedef enum {
 	SQ_NB, NO_SQ
 } Square;
 
+typedef struct {
+	int8_t delta_rank;
+	int8_t delta_file;
+} Offset;
+
 extern const char* piece_symbols;
 extern const int8_t knight_move_offsets[8];
 extern const int8_t bishop_move_offsets[4];

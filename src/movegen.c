@@ -169,19 +169,14 @@ static void generate_queen_moves(const Board *board, Piece piece, Square from, M
 }
 
 static void generate_king_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
-    Bitboard all_occ = board_occupancy(board);
+    Bitboard current_side_occ = current_side_occupancy(board);
     Bitboard enemy_occ = enemy_board_occupancy(board);
-    for (int8_t i = 0; i < KING_MOVE_OFFSETS_SIZE; i++) {
-        Square to = from + king_move_offsets[i];
-        if (!is_valid_sq(to)) {
-            continue;
-        }
 
-        if (!bb_test(all_occ, to)) {
-            add_move(board, from, to, piece, MOVE_QUIET, move_list);
-        } else if (bb_test(enemy_occ, to)) {
-            add_move(board, from, to, piece, MOVE_CAPTURE, move_list);
-        }
+    Bitboard attacks = (king_attacks[from] & ~current_side_occ);
+    while (attacks) {
+        Square to = pop_lssb(&attacks);
+        uint8_t flags = bb_test(enemy_occ, to) ? MOVE_CAPTURE : MOVE_QUIET;
+        add_move(board, from, to, piece, flags, move_list);
     }
 }
 
