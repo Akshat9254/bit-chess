@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "movegen.h"
+#include "attacks.h"
 
 static void test_generate_knight_moves(void) {
     Board board;
@@ -40,6 +41,15 @@ static void test_generate_knight_moves(void) {
     assert(moves_list.count == 7);
     assert(moves_list.moves[2].captured_piece != NO_PIECE);
     assert(moves_list.moves[2].flags & MOVE_CAPTURE);
+
+    clear_board(&board);
+    place_piece_on_sq(&board, WHITE_KNIGHT, A2);
+
+    board.side_to_move = WHITE;
+    moves_list.count = 0;
+    generate_moves_from_sq(&board, A2, &moves_list);
+    
+    assert(moves_list.count == 3);
 }
 
 static void test_generate_pawn_regular_moves(void) {
@@ -228,6 +238,7 @@ static void test_move_to_string(void) {
 }
 
 int main(void) {
+    init_attack_tables();
     test_generate_knight_moves();
     test_generate_pawn_regular_moves();
     test_generate_bishop_moves();

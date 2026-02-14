@@ -26,3 +26,14 @@ inline void bb_set(Bitboard *bb, int sq) {
 inline void bb_clear(Bitboard *bb, int sq) {
 	*bb &= ~(1ULL << sq);
 }
+
+Square pop_lssb(Bitboard *bb) {
+	if (*bb == 0) {
+        return NO_SQ;
+    }
+
+    Square lssb_value = __builtin_ctzll(*bb);
+    *bb &= (*bb - 1);
+
+    return lssb_value;
+}

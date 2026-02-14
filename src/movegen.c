@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "movegen.h"
 #include "board.h"
+#include "attacks.h"
+#include "bitboard.h"
 
 #define KNIGHT_MOVE_OFFSETS_SIZE 8
 #define BISHOP_MOVE_OFFSETS_SIZE 4
@@ -143,19 +145,13 @@ static void generate_pawn_moves(const Board *board, Piece piece, Square from, Mo
 }
 
 static void generate_knight_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
-    Bitboard all_occ = board_occupancy(board);
     Bitboard current_side_occ = current_side_occupancy(board);
-    for (int index = 0; index < KNIGHT_MOVE_OFFSETS_SIZE; index++) {
-        Square to = from + knight_move_offsets[index];
-        if (!is_valid_sq(to)) {
-            continue;
-        }
+    Bitboard enemy_occ = enemy_board_occupancy(board);
 
-        if (bb_test(current_side_occ, to)) {
-            continue;
-        }
-        
-        uint8_t flags = !bb_test(all_occ, to) ? MOVE_QUIET : MOVE_CAPTURE;
+    Bitboard attacks = (knight_attacks[from] & ~current_side_occ);
+    while (attacks) {
+        Square to = pop_lssb(&attacks);
+        uint8_t flags = bb_test(enemy_occ, to) ? MOVE_CAPTURE : MOVE_QUIET;
         add_move(board, from, to, piece, flags, move_list);
     }
 }
