@@ -233,7 +233,7 @@ static void add_sliding_moves(const Board *board, Square from, Piece piece,
     for (int8_t i = 0; i < move_offsets_size; i++) {
         Square prev = from;
         Square to = prev + move_offsets[i];
-        while (is_valid_sq(to) && rank_dist(prev, to) <= 1 && file_dist(prev, to) <= 1) {
+        while (is_sq_on_board(to) && rank_dist(prev, to) <= 1 && file_dist(prev, to) <= 1) {
             if (!bb_test(all_occ, to)) {
                 add_move(board, from, to, piece, MOVE_QUIET, move_list);
                 prev = to;

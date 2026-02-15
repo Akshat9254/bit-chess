@@ -50,7 +50,7 @@ static void add_attack_masks(Bitboard attack_table[SQ_NB], const Offset offsets[
             int8_t to_rank = rank + offsets[i].delta_rank;
             int8_t to_file = file + offsets[i].delta_file;
 
-            if (to_rank >= 0 && to_rank < RANK_NB && to_file >= 0 && to_file < FILE_NB) {
+            if (is_rank_file_on_board(to_rank, to_file)) {
                 bb_set(&attack_mask, to_sq(to_rank, to_file));
             }
         }

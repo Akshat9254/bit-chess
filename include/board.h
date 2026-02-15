@@ -15,7 +15,8 @@ void init_board(Board *b);
 void clear_board(Board *b);
 void place_piece_on_sq(Board *board, Piece piece, Square sq);
 void clear_sq(Board *board, Square sq);
-bool is_valid_sq(Square sq);
+bool is_sq_on_board(Square sq);
+bool is_rank_file_on_board(int8_t rank, int8_t file);
 
 /* helpers */
 uint8_t rank_of_sq(Square sq);

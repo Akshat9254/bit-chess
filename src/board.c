@@ -54,7 +54,7 @@ inline void clear_board(Board *board) {
 }
 
 void place_piece_on_sq(Board *board, Piece piece, Square sq) {
-	if (!is_valid_sq(sq)) {
+	if (!is_sq_on_board(sq)) {
 		return;
 	}
 
@@ -79,8 +79,12 @@ void clear_sq(Board *board, Square sq) {
 	bb_clear(&board->occupied[piece_color], sq);
 }
 
-inline bool is_valid_sq(Square sq) {
+inline bool is_sq_on_board(Square sq) {
 	return sq >= 0 && sq < SQ_NB;
+}
+
+inline bool is_rank_file_on_board(int8_t rank, int8_t file) {
+	return 0 <= rank && rank < RANK_NB && 0 <= file && file < FILE_NB;
 }
 
 inline uint8_t rank_of_sq(Square sq) {
@@ -103,7 +107,7 @@ uint8_t file_dist(Square sq1, Square sq2) {
 
 inline Square to_sq(uint8_t rank, uint8_t file) {
 	Square sq = rank * FILE_NB + file;
-	return is_valid_sq(sq) ? sq : NO_SQ;
+	return is_sq_on_board(sq) ? sq : NO_SQ;
 }
 
 inline char piece_symbol_of(Piece piece) {
