@@ -5,17 +5,8 @@
 #include "attacks.h"
 #include "bitboard.h"
 
-#define KNIGHT_MOVE_OFFSETS_SIZE 8
-#define BISHOP_MOVE_OFFSETS_SIZE 4
-#define ROOK_MOVE_OFFSETS_SIZE 4
-#define QUEEN_MOVE_OFFSETS_SIZE 8
-#define KING_MOVE_OFFSETS_SIZE 8
-
-const int8_t knight_move_offsets[] = {-17, -15, -10, -6, 6, 10, 15, 17};
-const int8_t bishop_move_offsets[] = {-9, -7, 7, 9};
-const int8_t rook_move_offsets[] = {-8, -1, 1, 8};
-const int8_t queen_move_offsets[] = {-9, -8, -7, -1, 1, 7, 8, 9};
-const int8_t king_move_offsets[] = {-9, -8, -7, -1, 1, 7, 8, 9};
+const Offset orthogonal_offsets[] = {{ -1, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 }};
+const Offset diagonal_offsets[] = {{ -1, -1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }};
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square from, MoveList *move_list);
 static void generate_knight_moves(const Board *board, Piece piece, Square from, MoveList *move_list);
@@ -27,7 +18,7 @@ static void add_pawn_promotion_moves(const Board *board, Square from, Square to,
 static void add_move(const Board *board, Square from, Square to, Piece piece, uint8_t extra_flags, MoveList *move_list);
 static void add_enpassant_move(const Board *board, Square from, Piece captured_piece, MoveList *move_list);
 static void add_sliding_moves(const Board *board, Square from, Piece piece, 
-    const int8_t move_offsets[], int8_t move_offsets_size, MoveList *move_list);
+    const Offset move_offsets[], size_t offsets_size, MoveList *move_list);
 
 void generate_moves_from_sq(const Board *board, Square sq, MoveList *move_list) {
     Piece piece = piece_on_sq(board, sq);
@@ -157,15 +148,16 @@ static void generate_knight_moves(const Board *board, Piece piece, Square from, 
 }
 
 static void generate_bishop_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
-    add_sliding_moves(board, from, piece, bishop_move_offsets, BISHOP_MOVE_OFFSETS_SIZE, move_list);
+    add_sliding_moves(board, from, piece, diagonal_offsets, DIAGONAL_OFFSETS_SIZE, move_list);
 }
 
 static void generate_rook_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
-    add_sliding_moves(board, from, piece, rook_move_offsets, ROOK_MOVE_OFFSETS_SIZE, move_list);
+    add_sliding_moves(board, from, piece, orthogonal_offsets, ORTHOGONAL_OFFSETS_SIZE, move_list);
 }
 
 static void generate_queen_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
-    add_sliding_moves(board, from, piece, queen_move_offsets, QUEEN_MOVE_OFFSETS_SIZE, move_list);
+    add_sliding_moves(board, from, piece, diagonal_offsets, DIAGONAL_OFFSETS_SIZE, move_list);
+    add_sliding_moves(board, from, piece, orthogonal_offsets, ORTHOGONAL_OFFSETS_SIZE, move_list);
 }
 
 static void generate_king_moves(const Board *board, Piece piece, Square from, MoveList *move_list) {
@@ -226,18 +218,22 @@ static void add_enpassant_move(const Board *board, Square from, Piece captured_p
 }
 
 static void add_sliding_moves(const Board *board, Square from, Piece piece, 
-    const int8_t move_offsets[], int8_t move_offsets_size, MoveList *move_list) {
+    const Offset offsets[], size_t offsets_size, MoveList *move_list) {
     Bitboard all_occ = board_occupancy(board);
     Bitboard enemy_occ = enemy_board_occupancy(board);
+    const uint8_t from_rank = rank_of_sq(from);
+    const uint8_t from_file = file_of_sq(from);
 
-    for (int8_t i = 0; i < move_offsets_size; i++) {
-        Square prev = from;
-        Square to = prev + move_offsets[i];
-        while (is_sq_on_board(to) && rank_dist(prev, to) <= 1 && file_dist(prev, to) <= 1) {
+    for (uint8_t i = 0; i < offsets_size; i++) {
+        uint8_t to_rank = from_rank + offsets[i].delta_rank;
+        uint8_t to_file = from_file + offsets[i].delta_file;
+
+        while (is_rank_file_on_board(to_rank, to_file)) {
+            Square to = to_sq(to_rank, to_file);
             if (!bb_test(all_occ, to)) {
                 add_move(board, from, to, piece, MOVE_QUIET, move_list);
-                prev = to;
-                to += move_offsets[i];
+                to_rank += offsets[i].delta_rank;
+                to_file += offsets[i].delta_file;
             } else {
                 if (bb_test(enemy_occ, to)) {
                     add_move(board, from, to, piece, MOVE_CAPTURE, move_list);

@@ -56,11 +56,11 @@ typedef struct {
 	int8_t delta_file;
 } Offset;
 
+#define ORTHOGONAL_OFFSETS_SIZE 4
+#define DIAGONAL_OFFSETS_SIZE 4
+
+extern const Offset orthogonal_offsets[];
+extern const Offset diagonal_offsets[];
 extern const char* piece_symbols;
-extern const int8_t knight_move_offsets[8];
-extern const int8_t bishop_move_offsets[4];
-extern const int8_t rook_move_offsets[4];
-extern const int8_t queen_move_offsets[8];
-extern const int8_t king_move_offsets[8];
 
 #endif
