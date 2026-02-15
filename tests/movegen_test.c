@@ -142,6 +142,30 @@ static void test_generate_pawn_regular_moves(void) {
     assert(moves_list.moves[1].captured_piece == BLACK_PAWN);
     assert(moves_list.moves[1].promotion == NO_PIECE);
     assert(moves_list.moves[1].flags == (MOVE_CAPTURE | MOVE_ENPASSANT));
+
+    /*test left capture */
+    clear_board(&board);
+    place_piece_on_sq(&board, WHITE_PAWN, A4);
+    place_piece_on_sq(&board, BLACK_PAWN, H4);
+
+    moves_list.count = 0;
+    board.side_to_move = WHITE;
+
+    generate_moves_from_sq(&board, A4, &moves_list);
+
+    assert(moves_list.count == 1);
+    
+    /* test right capture move */
+    clear_board(&board);
+    place_piece_on_sq(&board, WHITE_PAWN, H4);
+    place_piece_on_sq(&board, BLACK_PAWN, A6);
+
+    moves_list.count = 0;
+    board.side_to_move = WHITE;
+
+    generate_moves_from_sq(&board, H4, &moves_list);
+
+    assert(moves_list.count == 1);
 }
 
 static void test_generate_bishop_moves(void) {

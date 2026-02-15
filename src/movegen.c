@@ -119,7 +119,7 @@ static void generate_pawn_moves(const Board *board, Piece piece, Square from, Mo
     }
 
     // right capture
-    if (file < FILE_NB) {
+    if (file + 1 < FILE_NB) {
         Square to = from + single_push_dir + 1;
         if (bb_test(enemy_occ, to)) {
             if (rank == promotion_rank) {
