@@ -7,10 +7,12 @@ bool is_initialized = false;
 
 Bitboard knight_attacks[SQ_NB];
 Bitboard king_attacks[SQ_NB];
+Bitboard pawn_attacks[COLOR_NB][SQ_NB];
 
 static void init_knight_attack_table(void);
 static void init_king_attack_table(void);
-static void add_attack_masks(Bitboard attack_table[SQ_NB], const Offset offsets[], size_t offset_size);
+static void init_pawn_attack_table(void);
+static void init_leaper_attacks(Bitboard attack_table[SQ_NB], const Offset offsets[], size_t offset_size);
 
 void init_attack_tables(void) {
     if (is_initialized) {
@@ -28,7 +30,7 @@ static void init_knight_attack_table(void) {
         { 2, 1 }, { 1, 2 }, { -1, 2 }, { -2, 1 }
     };
 
-    add_attack_masks(knight_attacks, offsets, 8);
+    init_leaper_attacks(knight_attacks, offsets, 8);
 }
 
 static void init_king_attack_table(void) {
@@ -37,10 +39,18 @@ static void init_king_attack_table(void) {
         { 1, 1 }, { 1, 0 }, { 1, -1 }, { 0, -1 }
     };
 
-    add_attack_masks(king_attacks, offsets, 8);
+    init_leaper_attacks(king_attacks, offsets, 8);
 }
 
-static void add_attack_masks(Bitboard attack_table[SQ_NB], const Offset offsets[], size_t offset_size) {
+static void init_pawn_attack_table(void) {
+    const Offset white_offsets[2] = {{ 1, -1 }, { 1, 1 }};
+    const Offset black_offsets[2] = {{ -1, -1 }, { -1, 1 }};
+
+    init_leaper_attacks(pawn_attacks[WHITE], white_offsets, 2);
+    init_leaper_attacks(pawn_attacks[BLACK], black_offsets, 2);
+}
+
+static void init_leaper_attacks(Bitboard attack_table[SQ_NB], const Offset offsets[], size_t offset_size) {
     for (Square sq = 0; sq < SQ_NB; sq++) {
         Bitboard attack_mask = 0ULL;
         const uint8_t rank = rank_of_sq(sq);

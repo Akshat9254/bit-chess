@@ -13,6 +13,8 @@ typedef uint64_t Bitboard;
 
 #define RANK_2_MASK 0x000000000000FF00ULL
 #define RANK_7_MASK 0x00FF000000000000ULL
+#define FILE_A_INDEX 0
+#define FILE_H_INDEX 7
 #define FILE_A 'a'
 #define FILE_H 'h'
 

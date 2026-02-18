@@ -2,8 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "board.h"
+#include "attacks.h"
 
 const char* piece_symbols = "PNBRQKpnbrqk__";
+
+static bool pawn_attack_sq(const Board *board, const Square sq, const Color attacker);
+static bool knight_attack_sq(const Board *board, const Square sq, const Color attacker);
 
 void init_board(Board *board) {
 	clear_board(board);
@@ -85,6 +89,18 @@ inline bool is_sq_on_board(Square sq) {
 
 inline bool is_rank_file_on_board(int8_t rank, int8_t file) {
 	return 0 <= rank && rank < RANK_NB && 0 <= file && file < FILE_NB;
+}
+
+bool is_sq_attacked(const Board *board, const Square sq, const Color attacker) {
+	return false;
+}
+
+static bool pawn_attack_sq(const Board *board, const Square sq, const Color attacker) {
+	return (pawn_attacks[!attacker][sq] & board->occupied[attacker == WHITE ? WHITE_PAWN : BLACK_PAWN]);
+}
+
+static bool knight_attack_sq(const Board *board, const Square sq, const Color attacker) {
+	
 }
 
 inline uint8_t rank_of_sq(Square sq) {
