@@ -1,7 +1,8 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "defs.h"
+#include <stdbool.h>
+#include "chess_types.h"
 #include "bitboard.h"
 
 typedef struct {
@@ -15,19 +16,9 @@ void init_board(Board *b);
 void clear_board(Board *b);
 void place_piece_on_sq(Board *board, Piece piece, Square sq);
 void clear_sq(Board *board, Square sq);
-bool is_sq_on_board(Square sq);
-bool is_rank_file_on_board(int8_t rank, int8_t file);
 bool is_sq_attacked(const Board *board, const Square sq, const Color attacker);
-
-/* helpers */
-uint8_t rank_of_sq(Square sq);
-uint8_t file_of_sq(Square sq);
-uint8_t rank_dist(Square sq1, Square sq2);
-uint8_t file_dist(Square sq1, Square sq2);
-Square to_sq(uint8_t rank, uint8_t file);
-char piece_symbol_of(Piece piece);
-Color piece_color_of(Piece piece);
 Piece piece_on_sq(const Board *b, Square sq);
+
 Bitboard board_occupancy(const Board *board);
 Bitboard enemy_board_occupancy(const Board *board);
 Bitboard current_side_occupancy(const Board *board);

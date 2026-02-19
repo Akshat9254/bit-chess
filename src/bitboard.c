@@ -22,18 +22,6 @@ void bb_print(Bitboard bb) {
 	printf("  Bitboard = 0x%016llxULL\n\n", bb);
 }
 
-inline bool bb_test(Bitboard bb, int sq) {
-	return (bb & (1ULL << sq)) > 0;
-}
-
-inline void bb_set(Bitboard *bb, int sq) {
-	*bb |= (1ULL << sq);
-}
-
-inline void bb_clear(Bitboard *bb, int sq) {
-	*bb &= ~(1ULL << sq);
-}
-
 Square pop_lssb(Bitboard *bb) {
 	if (*bb == 0) {
         return NO_SQ;

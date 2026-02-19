@@ -1,7 +1,7 @@
 #ifndef ATTACKS_H
 #define ATTACKS_H
 
-#include "defs.h"
+#include "chess_types.h"
 
 extern Bitboard knight_attacks[SQ_NB];
 extern Bitboard king_attacks[SQ_NB];

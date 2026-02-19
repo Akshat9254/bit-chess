@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "piece.h"
+#include "square.h"
 #include "board.h"
 #include "attacks.h"
-
-const char* piece_symbols = "PNBRQKpnbrqk__";
 
 static bool pawn_attack_sq(const Board *board, const Square sq, const Color attacker);
 static bool knight_attack_sq(const Board *board, const Square sq, const Color attacker);
@@ -20,33 +20,33 @@ void init_board(Board *board) {
 	board->occupied[BLACK] |= board->pieces[BLACK_PAWN];
 	
 	/* knights */
-	place_piece_on_sq(board, WHITE_KNIGHT, B1);
-	place_piece_on_sq(board, WHITE_KNIGHT, G1);
+	place_piece_on_sq(board, WHITE_KNIGHT, b1);
+	place_piece_on_sq(board, WHITE_KNIGHT, g1);
 	
-	place_piece_on_sq(board, BLACK_KNIGHT, B8);
-	place_piece_on_sq(board, BLACK_KNIGHT, G8);
+	place_piece_on_sq(board, BLACK_KNIGHT, b8);
+	place_piece_on_sq(board, BLACK_KNIGHT, g8);
 	
 	/* bishop */
-	place_piece_on_sq(board, WHITE_BISHOP, C1);
-	place_piece_on_sq(board, WHITE_BISHOP, F1);
+	place_piece_on_sq(board, WHITE_BISHOP, c1);
+	place_piece_on_sq(board, WHITE_BISHOP, f1);
 
-	place_piece_on_sq(board, BLACK_BISHOP, C8);
-	place_piece_on_sq(board, BLACK_BISHOP, F8);
+	place_piece_on_sq(board, BLACK_BISHOP, c8);
+	place_piece_on_sq(board, BLACK_BISHOP, f8);
 
 	/* rooks */
-	place_piece_on_sq(board, WHITE_ROOK, A1);
-	place_piece_on_sq(board, WHITE_ROOK, H1);
+	place_piece_on_sq(board, WHITE_ROOK, a1);
+	place_piece_on_sq(board, WHITE_ROOK, h1);
 
-	place_piece_on_sq(board, BLACK_ROOK, A8);
-	place_piece_on_sq(board, BLACK_ROOK, H8);
+	place_piece_on_sq(board, BLACK_ROOK, a8);
+	place_piece_on_sq(board, BLACK_ROOK, h8);
 
 	/* queens */
-	place_piece_on_sq(board, WHITE_QUEEN, D1);
-	place_piece_on_sq(board, BLACK_QUEEN, D8);
+	place_piece_on_sq(board, WHITE_QUEEN, d1);
+	place_piece_on_sq(board, BLACK_QUEEN, d8);
 	
 	/* kings */
-	place_piece_on_sq(board, WHITE_KING, E1);
-	place_piece_on_sq(board, BLACK_KING, E8);
+	place_piece_on_sq(board, WHITE_KING, e1);
+	place_piece_on_sq(board, BLACK_KING, e8);
 
 	board->side_to_move = WHITE;
 	board->enpassant_sq = NO_SQ;
@@ -83,14 +83,6 @@ void clear_sq(Board *board, Square sq) {
 	bb_clear(&board->occupied[piece_color], sq);
 }
 
-inline bool is_sq_on_board(Square sq) {
-	return sq >= 0 && sq < SQ_NB;
-}
-
-inline bool is_rank_file_on_board(int8_t rank, int8_t file) {
-	return 0 <= rank && rank < RANK_NB && 0 <= file && file < FILE_NB;
-}
-
 bool is_sq_attacked(const Board *board, const Square sq, const Color attacker) {
 	return false;
 }
@@ -100,38 +92,7 @@ static bool pawn_attack_sq(const Board *board, const Square sq, const Color atta
 }
 
 static bool knight_attack_sq(const Board *board, const Square sq, const Color attacker) {
-	
-}
 
-inline uint8_t rank_of_sq(Square sq) {
-	return (sq >> FILE_NB_LOG);
-}
-
-inline uint8_t file_of_sq(Square sq) {
-	return (sq & FILE_NB_REM_MASK);
-}
-
-uint8_t rank_dist(Square sq1, Square sq2) {
-	int8_t dist = rank_of_sq(sq1) - rank_of_sq(sq2);
-	return abs(dist);
-}
-
-uint8_t file_dist(Square sq1, Square sq2) {
-	int8_t dist = file_of_sq(sq1) - file_of_sq(sq2);
-	return abs(dist);
-}
-
-inline Square to_sq(uint8_t rank, uint8_t file) {
-	Square sq = rank * FILE_NB + file;
-	return is_sq_on_board(sq) ? sq : NO_SQ;
-}
-
-inline char piece_symbol_of(Piece piece) {
-	return piece_symbols[piece];
-}
-
-inline Color piece_color_of(Piece piece) {
-	return piece <= WHITE_KING ? WHITE : BLACK;
 }
 
 Piece piece_on_sq(const Board *board, Square sq) {

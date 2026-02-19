@@ -5,24 +5,24 @@
 
 static void test_bb_test(void) {
     Bitboard bb = 0;
-    assert(bb_test(bb, A1) == false);
-    assert(bb_test(bb, H8) == false);
+    assert(bb_test(bb, a1) == false);
+    assert(bb_test(bb, h8) == false);
 
-    bb_set(&bb, A1);
-    assert(bb_test(bb, A1) == true);
-    assert(bb_test(bb, H8) == false);
+    bb_set(&bb, a1);
+    assert(bb_test(bb, a1) == true);
+    assert(bb_test(bb, h8) == false);
 
-    bb_set(&bb, H8);
-    assert(bb_test(bb, A1) == true);
-    assert(bb_test(bb, H8) == true);
+    bb_set(&bb, h8);
+    assert(bb_test(bb, a1) == true);
+    assert(bb_test(bb, h8) == true);
 
-    bb_clear(&bb, A1);
-    assert(bb_test(bb, A1) == false);
-    assert(bb_test(bb, H8) == true);
+    bb_clear(&bb, a1);
+    assert(bb_test(bb, a1) == false);
+    assert(bb_test(bb, h8) == true);
 
-    bb_clear(&bb, H8);
-    assert(bb_test(bb, A1) == false);
-    assert(bb_test(bb, H8) == false);
+    bb_clear(&bb, h8);
+    assert(bb_test(bb, a1) == false);
+    assert(bb_test(bb, h8) == false);
 }
 
 static void test_bb_set_and_clear(void) {

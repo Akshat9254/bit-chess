@@ -27,11 +27,11 @@ static void test_init_board_white_pieces(void) {
     Board b;
     init_board(&b);
 
-    Bitboard knights = (1ULL << B1) | (1ULL << G1);
-    Bitboard bishops = (1ULL << C1) | (1ULL << F1);
-    Bitboard rooks   = (1ULL << A1) | (1ULL << H1);
-    Bitboard queen   = (1ULL << D1);
-    Bitboard king    = (1ULL << E1);
+    Bitboard knights = (1ULL << b1) | (1ULL << g1);
+    Bitboard bishops = (1ULL << c1) | (1ULL << f1);
+    Bitboard rooks   = (1ULL << a1) | (1ULL << h1);
+    Bitboard queen   = (1ULL << d1);
+    Bitboard king    = (1ULL << e1);
 
     assert(b.pieces[WHITE_KNIGHT] == knights);
     assert(b.pieces[WHITE_BISHOP] == bishops);
@@ -47,11 +47,11 @@ static void test_init_board_black_pieces(void) {
     Board b;
     init_board(&b);
 
-    Bitboard knights = (1ULL << B8) | (1ULL << G8);
-    Bitboard bishops = (1ULL << C8) | (1ULL << F8);
-    Bitboard rooks   = (1ULL << A8) | (1ULL << H8);
-    Bitboard queen   = (1ULL << D8);
-    Bitboard king    = (1ULL << E8);
+    Bitboard knights = (1ULL << b8) | (1ULL << g8);
+    Bitboard bishops = (1ULL << c8) | (1ULL << f8);
+    Bitboard rooks   = (1ULL << a8) | (1ULL << h8);
+    Bitboard queen   = (1ULL << d8);
+    Bitboard king    = (1ULL << e8);
 
     assert(b.pieces[BLACK_KNIGHT] == knights);
     assert(b.pieces[BLACK_BISHOP] == bishops);

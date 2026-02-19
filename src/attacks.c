@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
+#include "square.h"
 #include "attacks.h"
 #include "board.h"
 
@@ -90,22 +91,22 @@ static Bitboard generate_bishop_relevant_attacks_from_sq(const Square sq) {
     const int8_t file = file_of_sq(sq);
     Bitboard attack_mask = 0ULL;
 
-    for (int8_t to_rank = rank - 1, to_file = file - 1; to_rank > 0 && to_file > 0; to_rank--, to_file--) {
+    for (int8_t to_rank = rank - 1, to_file = file - 1; to_rank > RANK_1 && to_file > FILE_A; to_rank--, to_file--) {
         Square to = to_sq(to_rank, to_file);
         bb_set(&attack_mask, to);
     }
 
-    for (int8_t to_rank = rank - 1, to_file = file + 1; to_rank > 0 && to_file < FILE_H_INDEX; to_rank--, to_file++) {
+    for (int8_t to_rank = rank - 1, to_file = file + 1; to_rank > RANK_1 && to_file < FILE_H; to_rank--, to_file++) {
         Square to = to_sq(to_rank, to_file);
         bb_set(&attack_mask, to);
     }
 
-    for (int8_t to_rank = rank + 1, to_file = file - 1; to_rank < RANK_NB - 1 && to_file > 0; to_rank++, to_file--) {
+    for (int8_t to_rank = rank + 1, to_file = file - 1; to_rank < RANK_8 && to_file > FILE_A; to_rank++, to_file--) {
         Square to = to_sq(to_rank, to_file);
         bb_set(&attack_mask, to);
     }
 
-    for (int8_t to_rank = rank + 1, to_file = file + 1; to_rank < RANK_NB - 1 && to_file < FILE_H_INDEX; to_rank++, to_file++) {
+    for (int8_t to_rank = rank + 1, to_file = file + 1; to_rank < RANK_8 && to_file < FILE_H; to_rank++, to_file++) {
         Square to = to_sq(to_rank, to_file);
         bb_set(&attack_mask, to);
     }
@@ -124,22 +125,22 @@ static Bitboard generate_rook_relevant_attacks_from_sq(const Square sq) {
     const int8_t file = file_of_sq(sq);
     Bitboard attack_mask = 0ULL;
 
-    for (int8_t to_rank = rank - 1; to_rank > 0; to_rank--) {
+    for (int8_t to_rank = rank - 1; to_rank > RANK_1; to_rank--) {
         Square to = to_sq(to_rank, file);
         bb_set(&attack_mask, to);
     }
 
-    for (int8_t to_file = file - 1; to_file > 0; to_file--) {
+    for (int8_t to_file = file - 1; to_file > FILE_A; to_file--) {
         Square to = to_sq(rank, to_file);
         bb_set(&attack_mask, to);
     }
 
-    for (int8_t to_rank = rank + 1; to_rank < RANK_NB - 1; to_rank++) {
+    for (int8_t to_rank = rank + 1; to_rank < RANK_8; to_rank++) {
         Square to = to_sq(to_rank, file);
         bb_set(&attack_mask, to);
     }
 
-    for (int8_t to_file = file + 1; to_file < FILE_H_INDEX; to_file++) {
+    for (int8_t to_file = file + 1; to_file < FILE_H; to_file++) {
         Square to = to_sq(rank, to_file);
         bb_set(&attack_mask, to);
     }

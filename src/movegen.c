@@ -1,12 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "movegen.h"
+#include "chess_types.h"
+#include "square.h"
+#include "piece.h"
+#include "bitboard.h"
 #include "board.h"
 #include "attacks.h"
-#include "bitboard.h"
-
-const Offset orthogonal_offsets[] = {{ -1, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 }};
-const Offset diagonal_offsets[] = {{ -1, -1 }, { -1, 1 }, { 1, 1 }, { 1, -1 }};
+#include "movegen.h"
 
 static void generate_pawn_moves(const Board *board, Piece piece, Square from, MoveList *move_list);
 static void generate_knight_moves(const Board *board, Piece piece, Square from, MoveList *move_list);
