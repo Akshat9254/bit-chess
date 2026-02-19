@@ -7,7 +7,9 @@ extern Bitboard knight_attacks[SQ_NB];
 extern Bitboard king_attacks[SQ_NB];
 extern Bitboard pawn_attacks[COLOR_NB][SQ_NB];
 extern Bitboard bishop_relevant_attacks[SQ_NB];
+extern Bitboard bishop_attacks_on_the_fly[SQ_NB];
 extern Bitboard rook_relevant_attacks[SQ_NB];
+extern Bitboard rook_attacks_on_the_fly[SQ_NB];
 
 void init_attack_tables(void);
 
