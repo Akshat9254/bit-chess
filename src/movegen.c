@@ -141,7 +141,8 @@ static void generate_knight_moves(const Board *board, Piece piece, Square from, 
 
     Bitboard attacks = (knight_attacks[from] & ~current_side_occ);
     while (attacks) {
-        Square to = pop_lssb(&attacks);
+        Square to = bb_find_lssb_index(attacks);
+        bb_pop_lssb(&attacks);
         uint8_t flags = bb_test(enemy_occ, to) ? MOVE_CAPTURE : MOVE_QUIET;
         add_move(board, from, to, piece, flags, move_list);
     }
@@ -166,7 +167,8 @@ static void generate_king_moves(const Board *board, Piece piece, Square from, Mo
 
     Bitboard attacks = (king_attacks[from] & ~current_side_occ);
     while (attacks) {
-        Square to = pop_lssb(&attacks);
+        Square to = bb_find_lssb_index(attacks);
+        bb_pop_lssb(&attacks);
         uint8_t flags = bb_test(enemy_occ, to) ? MOVE_CAPTURE : MOVE_QUIET;
         add_move(board, from, to, piece, flags, move_list);
     }

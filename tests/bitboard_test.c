@@ -38,9 +38,42 @@ static void test_bb_set_and_clear(void) {
     }
 }
 
+static void test_bb_popcount(void) {
+    Bitboard bb = 0xFF0000ULL;
+    int8_t popcount = bb_popcount(bb);
+    assert(popcount == 8);
+
+    bb = 0ULL;
+    popcount = bb_popcount(bb);
+    assert(popcount == 0);
+}
+
+static void test_bb_find_lssb_index(void) {
+    Bitboard bb = 0xFF0000ULL;
+    int8_t lssb_index = bb_find_lssb_index(bb);
+    assert(lssb_index == 16);
+
+    bb = 0ULL;
+    lssb_index = bb_find_lssb_index(bb);
+    assert(lssb_index == -1);
+}
+
+static void test_bb_pop_lssb(void) {
+    Bitboard bb = 0xFF0000ULL;
+    bb_pop_lssb(&bb);
+    assert(bb == 0xFE0000ULL);
+
+    bb = 0ULL;
+    bb_pop_lssb(&bb);
+    assert(bb == 0ULL);
+}
+
 int main(void) {
     test_bb_test();
     test_bb_set_and_clear();
+    test_bb_popcount();
+    test_bb_find_lssb_index();
+    test_bb_pop_lssb();
     printf("✅ All tests in bitboard_test.c passed.\n");
     return 0;
 }
