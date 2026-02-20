@@ -361,7 +361,19 @@ static void generate_rook_attacks_from_sq(const Square sq) {
 }
 
 static Bitboard set_occupancy(uint32_t index, uint32_t bits, Bitboard attack_mask) {
-    return 0ULL;
+    Bitboard occ = 0ULL;
+
+    for (uint32_t i = 0; i < bits; i++) {
+        if (index & (1 << i)) {
+            Square sq = bb_find_lssb_index(attack_mask);
+            assert(sq != -1);
+            bb_set(&occ, sq);
+        }
+
+        bb_pop_lssb(&attack_mask);
+    }
+
+    return occ;
 }
 
 static inline U64 random_u64(void) {
