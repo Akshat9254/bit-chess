@@ -16,11 +16,12 @@ Bitboard pawn_attacks[COLOR_NB][SQ_NB];
 Bitboard bishop_relevant_attacks[SQ_NB];
 U64 bishop_magics[SQ_NB];
 U8 bishop_shift[SQ_NB];
-Bitboard bishop_attacks[SQ_NB][512];
+Bitboard bishop_attacks[SQ_NB][MAX_BISHOP_OCC];
 
 Bitboard rook_relevant_attacks[SQ_NB];
 U64 rook_magics[SQ_NB];
 U8 rook_shift[SQ_NB];
+Bitboard rook_attacks[SQ_NB][MAX_ROOK_OCC];
 
 static void init_knight_attack_table(void);
 static void init_king_attack_table(void);
@@ -40,6 +41,8 @@ static void generate_bishop_attacks_from_sq(const Square sq);
 static void init_rook_relevant_attacks(void);
 static Bitboard generate_rook_relevant_attacks_from_sq(const Square sq);
 static Bitboard generate_rook_attacks_on_the_fly_from_sq(const Square sq, const Bitboard blockers);
+static void init_rook_attacks(void);
+static void generate_rook_attacks_from_sq(const Square sq);
 
 void init_attack_tables(void) {
     if (is_initialized) {
@@ -52,6 +55,7 @@ void init_attack_tables(void) {
     init_bishop_relevant_attacks();
     init_bishop_attacks();
     init_rook_relevant_attacks();
+    init_rook_attacks();
     is_initialized = true;
 }
 
@@ -300,6 +304,60 @@ static Bitboard generate_rook_attacks_on_the_fly_from_sq(const Square sq, const 
     }
 
     return attack_mask;
+}
+
+static void init_rook_attacks(void) {
+    for (Square sq = 0; sq < SQ_NB; sq++) {
+        generate_rook_attacks_from_sq(sq);
+    }
+}
+
+static void generate_rook_attacks_from_sq(const Square sq) {
+    Bitboard relevant_attacks = rook_relevant_attacks[sq];
+    uint8_t relevant_attack_bits = bb_popcount(relevant_attacks);
+    uint32_t relevant_count = (1 << relevant_attack_bits);
+    
+    rook_shift[sq] = SQ_NB - relevant_attack_bits;
+    
+    Bitboard attacks_on_the_fly[MAX_ROOK_OCC];
+    Bitboard occ[MAX_ROOK_OCC];
+
+    for (u_int32_t index = 0; index < relevant_count; index++) {
+        occ[index] = set_occupancy(index, relevant_attack_bits, relevant_attacks);
+        attacks_on_the_fly[index] = generate_rook_attacks_on_the_fly_from_sq(sq, occ[index]);
+    }
+    
+    Bitboard attacks[MAX_ROOK_OCC];
+    bool filled[MAX_ROOK_OCC];
+    bool found = false;
+
+    while (!found) {
+        U64 magic = random_magic();
+        bool fail = false;
+        memset(attacks, 0, sizeof(attacks));
+        memset(filled, false, sizeof(filled));
+
+        for (uint32_t index = 0; index < relevant_count; index++) {
+            uint32_t occ_index = ((occ[index] * magic) >> rook_shift[sq]);
+            if (!filled[occ_index]) {
+                attacks[occ_index] = attacks_on_the_fly[index];
+                filled[occ_index] = true;
+            } else if (attacks[occ_index] != attacks_on_the_fly[index]) {
+                fail = true;
+                break;
+            }
+        }
+
+        if (!fail) {
+            found = true;
+            rook_magics[sq] = magic;
+        }
+    }
+
+    for (u_int32_t index = 0; index < relevant_count; index++) {
+        uint32_t occ_index = ((occ[index] * rook_magics[sq]) >> rook_shift[sq]);
+        rook_attacks[sq][occ_index] = attacks_on_the_fly[index];
+    }
 }
 
 static Bitboard set_occupancy(uint32_t index, uint32_t bits, Bitboard attack_mask) {
