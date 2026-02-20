@@ -7,6 +7,8 @@
 #define RANK_7_MASK 0x00FF000000000000ULL
 
 typedef uint64_t Bitboard;
+typedef uint64_t U64;
+typedef uint8_t U8;
 
 enum {
 	FILE_A, FILE_B, FILE_C, FILE_D, 
