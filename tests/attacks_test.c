@@ -289,8 +289,6 @@ static void test_get_rook_attacks_from_b2_with_irrelevant_blocker(void) {
 }
 
 int main(void) {
-    init_attack_tables();
-
     test_get_bishop_attacks_from_d4_on_empty_board();
     test_get_bishop_attacks_from_d4_with_blocker_on_e5();
     test_get_bishop_attacks_from_d4_with_blocker_on_g7();
