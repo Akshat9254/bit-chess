@@ -59,6 +59,16 @@ void init_attack_tables(void) {
     is_initialized = true;
 }
 
+Bitboard get_bishop_attacks(const Square sq, const Bitboard occ) {
+    uint32_t occ_index = ((occ & bishop_relevant_attacks[sq]) * bishop_magics[sq]) >> bishop_shift[sq];
+    return bishop_attacks[sq][occ_index];
+}
+
+Bitboard get_rook_attacks(const Square sq, const Bitboard occ) {
+    uint32_t occ_index = ((occ & rook_relevant_attacks[sq]) * rook_magics[sq]) >> rook_shift[sq];
+    return rook_attacks[sq][occ_index];
+}
+
 static void init_knight_attack_table(void) {
     const Offset offsets[8] = {
         { -2, -1 }, { -1, -2 }, { 1, -2 }, { 2, -1 }, 

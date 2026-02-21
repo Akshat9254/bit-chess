@@ -21,5 +21,7 @@ extern U8 rook_shift[SQ_NB];
 extern Bitboard rook_attacks[SQ_NB][MAX_ROOK_OCC];
 
 void init_attack_tables(void);
+Bitboard get_bishop_attacks(const Square sq, const Bitboard occ);
+Bitboard get_rook_attacks(const Square sq, const Bitboard occ);
 
 #endif
