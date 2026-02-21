@@ -3,22 +3,28 @@
 
 #include "chess_types.h"
 
-#define MAX_BISHOP_OCC (1 << 9)
-#define MAX_ROOK_OCC (1 << 12)
+enum {
+    BISHOP_OCC_COUNT = 5248,
+    ROOK_OCC_COUNT = 102400,
+    ATTACK_TABLE_SIZE = 107648,
+    MAX_BISHOP_OCC = 1 << 9,
+    MAX_ROOK_OCC = 1 << 12
+};
+
+typedef struct {
+    Bitboard relevant_attacks;
+    U64 magic_no;
+    U32 attack_offset;
+    U8 shift;
+} Magic;
 
 extern Bitboard knight_attacks[SQ_NB];
 extern Bitboard king_attacks[SQ_NB];
 extern Bitboard pawn_attacks[COLOR_NB][SQ_NB];
 
-extern Bitboard bishop_relevant_attacks[SQ_NB];
-extern U64 bishop_magics[SQ_NB];
-extern U8 bishop_shift[SQ_NB];
-extern Bitboard bishop_attacks[SQ_NB][MAX_BISHOP_OCC];
-
-extern Bitboard rook_relevant_attacks[SQ_NB];
-extern U64 rook_magics[SQ_NB];
-extern U8 rook_shift[SQ_NB];
-extern Bitboard rook_attacks[SQ_NB][MAX_ROOK_OCC];
+extern Magic bishop_magics[SQ_NB];
+extern Magic rook_magics[SQ_NB];
+extern Bitboard sliding_pieces_attack_table[ATTACK_TABLE_SIZE];
 
 void init_attack_tables(void);
 Bitboard get_bishop_attacks(const Square sq, const Bitboard occ);

@@ -13,15 +13,10 @@ Bitboard knight_attacks[SQ_NB];
 Bitboard king_attacks[SQ_NB];
 Bitboard pawn_attacks[COLOR_NB][SQ_NB];
 
-Bitboard bishop_relevant_attacks[SQ_NB];
-U64 bishop_magics[SQ_NB];
-U8 bishop_shift[SQ_NB];
-Bitboard bishop_attacks[SQ_NB][MAX_BISHOP_OCC];
-
-Bitboard rook_relevant_attacks[SQ_NB];
-U64 rook_magics[SQ_NB];
-U8 rook_shift[SQ_NB];
-Bitboard rook_attacks[SQ_NB][MAX_ROOK_OCC];
+Magic bishop_magics[SQ_NB];
+Magic rook_magics[SQ_NB];
+Bitboard sliding_pieces_attack_table[ATTACK_TABLE_SIZE];
+U32 offset = 0;
 
 static void init_knight_attack_table(void);
 static void init_king_attack_table(void);
@@ -32,41 +27,48 @@ static Bitboard set_occupancy(uint32_t index, uint32_t bits, Bitboard attack_mas
 static inline U64 random_u64(void);
 static inline U64 random_magic(void);
 
-static void init_bishop_relevant_attacks(void);
 static Bitboard generate_bishop_relevant_attacks_from_sq(const Square sq);
 static Bitboard generate_bishop_attacks_on_the_fly_from_sq(const Square sq, const Bitboard blockers);
 static void init_bishop_attacks(void);
 static void generate_bishop_attacks_from_sq(const Square sq);
 
-static void init_rook_relevant_attacks(void);
 static Bitboard generate_rook_relevant_attacks_from_sq(const Square sq);
 static Bitboard generate_rook_attacks_on_the_fly_from_sq(const Square sq, const Bitboard blockers);
 static void init_rook_attacks(void);
 static void generate_rook_attacks_from_sq(const Square sq);
+
+static inline Bitboard get_sliding_piece_attacks(Square sq, Bitboard occ, const Magic *magics);
 
 void init_attack_tables(void) {
     if (is_initialized) {
         return;
     }
 
+    offset = 0;
+
     srand(time(NULL));
     init_knight_attack_table();
     init_king_attack_table();
-    init_bishop_relevant_attacks();
     init_bishop_attacks();
-    init_rook_relevant_attacks();
     init_rook_attacks();
     is_initialized = true;
 }
 
-Bitboard get_bishop_attacks(const Square sq, const Bitboard occ) {
-    uint32_t occ_index = ((occ & bishop_relevant_attacks[sq]) * bishop_magics[sq]) >> bishop_shift[sq];
-    return bishop_attacks[sq][occ_index];
+inline Bitboard get_bishop_attacks(const Square sq, const Bitboard occ) {
+    return get_sliding_piece_attacks(sq, occ, bishop_magics);
 }
 
-Bitboard get_rook_attacks(const Square sq, const Bitboard occ) {
-    uint32_t occ_index = ((occ & rook_relevant_attacks[sq]) * rook_magics[sq]) >> rook_shift[sq];
-    return rook_attacks[sq][occ_index];
+inline Bitboard get_rook_attacks(const Square sq, const Bitboard occ) {
+    return get_sliding_piece_attacks(sq, occ, rook_magics);
+}
+
+static inline Bitboard get_sliding_piece_attacks(Square sq, Bitboard occ, const Magic *magics) {
+    const Magic *magic = &magics[sq];
+    occ &= magic->relevant_attacks;
+    occ *= magic->magic_no;
+    occ >>= magic->shift;
+
+    return sliding_pieces_attack_table[magic->attack_offset + occ];
 }
 
 static void init_knight_attack_table(void) {
@@ -114,12 +116,6 @@ static void init_leaper_attacks(Bitboard attack_table[SQ_NB], const Offset offse
     }
 }
 
-static void init_bishop_relevant_attacks(void) {
-    for (Square sq = 0; sq < SQ_NB; sq++) {
-        bishop_relevant_attacks[sq] = generate_bishop_relevant_attacks_from_sq(sq);
-    }
-}
-
 static Bitboard generate_bishop_relevant_attacks_from_sq(const Square sq) {
     const int8_t rank = rank_of_sq(sq);
     const int8_t file = file_of_sq(sq);
@@ -155,16 +151,14 @@ static void init_bishop_attacks(void) {
 }
 
 static void generate_bishop_attacks_from_sq(const Square sq) {
-    Bitboard relevant_attacks = bishop_relevant_attacks[sq];
+    Bitboard relevant_attacks = generate_bishop_relevant_attacks_from_sq(sq);
     uint8_t relevant_attack_bits = bb_popcount(relevant_attacks);
     uint32_t relevant_count = (1 << relevant_attack_bits);
-    
-    bishop_shift[sq] = SQ_NB - relevant_attack_bits;
     
     Bitboard attacks_on_the_fly[MAX_BISHOP_OCC];
     Bitboard occ[MAX_BISHOP_OCC];
 
-    for (u_int32_t index = 0; index < relevant_count; index++) {
+    for (U32 index = 0; index < relevant_count; index++) {
         occ[index] = set_occupancy(index, relevant_attack_bits, relevant_attacks);
         attacks_on_the_fly[index] = generate_bishop_attacks_on_the_fly_from_sq(sq, occ[index]);
     }
@@ -172,6 +166,8 @@ static void generate_bishop_attacks_from_sq(const Square sq) {
     Bitboard attacks[MAX_BISHOP_OCC];
     bool filled[MAX_BISHOP_OCC];
     bool found = false;
+    U64 magic_no = 0ULL;
+    U8 shift = SQ_NB - relevant_attack_bits;
 
     while (!found) {
         U64 magic = random_magic();
@@ -180,7 +176,7 @@ static void generate_bishop_attacks_from_sq(const Square sq) {
         memset(filled, false, sizeof(filled));
 
         for (uint32_t index = 0; index < relevant_count; index++) {
-            uint32_t occ_index = ((occ[index] * magic) >> bishop_shift[sq]);
+            uint32_t occ_index = ((occ[index] * magic) >> shift);
             if (!filled[occ_index]) {
                 attacks[occ_index] = attacks_on_the_fly[index];
                 filled[occ_index] = true;
@@ -192,14 +188,24 @@ static void generate_bishop_attacks_from_sq(const Square sq) {
 
         if (!fail) {
             found = true;
-            bishop_magics[sq] = magic;
+            magic_no = magic;
         }
     }
 
-    for (u_int32_t index = 0; index < relevant_count; index++) {
-        uint32_t occ_index = ((occ[index] * bishop_magics[sq]) >> bishop_shift[sq]);
-        bishop_attacks[sq][occ_index] = attacks_on_the_fly[index];
+    Magic magic = {
+        .relevant_attacks = relevant_attacks,
+        .magic_no = magic_no,
+        .attack_offset = offset,
+        .shift = shift
+    };
+    
+    for (U32 index = 0; index < relevant_count; index++) {
+        uint32_t occ_index = ((occ[index] * magic_no) >> shift);
+        sliding_pieces_attack_table[offset + occ_index] = attacks_on_the_fly[index];
     }
+
+    offset += relevant_count;
+    bishop_magics[sq] = magic;
 }
 
 static Bitboard generate_bishop_attacks_on_the_fly_from_sq(const Square sq, const Bitboard blockers) {
@@ -240,12 +246,6 @@ static Bitboard generate_bishop_attacks_on_the_fly_from_sq(const Square sq, cons
     }
 
     return attack_mask;
-}
-
-static void init_rook_relevant_attacks(void) {
-    for (Square sq = 0; sq < SQ_NB; sq++) {
-        rook_relevant_attacks[sq] = generate_rook_relevant_attacks_from_sq(sq);
-    }
 }
 
 static Bitboard generate_rook_relevant_attacks_from_sq(const Square sq) {
@@ -323,16 +323,14 @@ static void init_rook_attacks(void) {
 }
 
 static void generate_rook_attacks_from_sq(const Square sq) {
-    Bitboard relevant_attacks = rook_relevant_attacks[sq];
+    Bitboard relevant_attacks = generate_rook_relevant_attacks_from_sq(sq);
     uint8_t relevant_attack_bits = bb_popcount(relevant_attacks);
     uint32_t relevant_count = (1 << relevant_attack_bits);
-    
-    rook_shift[sq] = SQ_NB - relevant_attack_bits;
     
     Bitboard attacks_on_the_fly[MAX_ROOK_OCC];
     Bitboard occ[MAX_ROOK_OCC];
 
-    for (u_int32_t index = 0; index < relevant_count; index++) {
+    for (U32 index = 0; index < relevant_count; index++) {
         occ[index] = set_occupancy(index, relevant_attack_bits, relevant_attacks);
         attacks_on_the_fly[index] = generate_rook_attacks_on_the_fly_from_sq(sq, occ[index]);
     }
@@ -340,6 +338,8 @@ static void generate_rook_attacks_from_sq(const Square sq) {
     Bitboard attacks[MAX_ROOK_OCC];
     bool filled[MAX_ROOK_OCC];
     bool found = false;
+    U64 magic_no = 0ULL;
+    U8 shift = SQ_NB - relevant_attack_bits;
 
     while (!found) {
         U64 magic = random_magic();
@@ -348,7 +348,7 @@ static void generate_rook_attacks_from_sq(const Square sq) {
         memset(filled, false, sizeof(filled));
 
         for (uint32_t index = 0; index < relevant_count; index++) {
-            uint32_t occ_index = ((occ[index] * magic) >> rook_shift[sq]);
+            uint32_t occ_index = ((occ[index] * magic) >> shift);
             if (!filled[occ_index]) {
                 attacks[occ_index] = attacks_on_the_fly[index];
                 filled[occ_index] = true;
@@ -360,14 +360,24 @@ static void generate_rook_attacks_from_sq(const Square sq) {
 
         if (!fail) {
             found = true;
-            rook_magics[sq] = magic;
+            magic_no = magic;
         }
     }
 
-    for (u_int32_t index = 0; index < relevant_count; index++) {
-        uint32_t occ_index = ((occ[index] * rook_magics[sq]) >> rook_shift[sq]);
-        rook_attacks[sq][occ_index] = attacks_on_the_fly[index];
+    Magic magic = {
+        .relevant_attacks = relevant_attacks,
+        .magic_no = magic_no,
+        .attack_offset = offset,
+        .shift = shift
+    };
+
+    for (U32 index = 0; index < relevant_count; index++) {
+        uint32_t occ_index = ((occ[index] * magic_no) >> shift);
+        sliding_pieces_attack_table[offset + occ_index] = attacks_on_the_fly[index];
     }
+
+    offset += relevant_count;
+    rook_magics[sq] = magic;
 }
 
 static Bitboard set_occupancy(uint32_t index, uint32_t bits, Bitboard attack_mask) {
