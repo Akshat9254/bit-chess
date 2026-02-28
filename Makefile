@@ -1,11 +1,8 @@
 # ==============================================================================
 # Makefile for bit-chess — Bitboard Chess Engine
-# Compiler: Apple Clang 17 / arm64-apple-darwin
+# Optimized for CLion / Static Analysis Visibility
 # ==============================================================================
 
-# ------------------------------------------------------------------------------
-# Project layout
-# ------------------------------------------------------------------------------
 TARGET      := bit-chess
 SRC_DIR     := src
 INC_DIR     := include
@@ -22,223 +19,145 @@ CC      := clang
 RM      := rm -rf
 
 # ------------------------------------------------------------------------------
-# Source / object discovery
+# Source / Object Discovery
 # ------------------------------------------------------------------------------
-# All production sources, excluding main.c
 LIB_SRCS    := $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c))
 MAIN_SRC    := $(SRC_DIR)/main.c
 
+# Object mappings
 LIB_OBJS    := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/src/%.o, $(LIB_SRCS))
 MAIN_OBJ    := $(BUILD_DIR)/src/main.o
 
+# Test and Tool mappings
 TEST_SRCS   := $(wildcard $(TEST_DIR)/*.c)
+TEST_BINS   := $(patsubst $(TEST_DIR)/%.c, $(BUILD_DIR)/tests/%, $(TEST_SRCS))
+
 TOOL_SRCS   := $(wildcard $(TOOLS_DIR)/*.c)
+TOOL_BINS   := $(patsubst $(TOOLS_DIR)/%.c, $(BUILD_DIR)/tools/%, $(TOOL_SRCS))
 
 # ------------------------------------------------------------------------------
-# Flags — common base
+# Flags
 # ------------------------------------------------------------------------------
-COMMON_FLAGS := \
-    -std=c23                    \
-    -I$(INC_DIR)                \
-    -Wall                       \
-    -Wextra                     \
-    -Wpedantic                  \
-    -Wshadow                    \
-    -Wstrict-aliasing=2         \
-    -Wcast-align                \
-    -Wformat=2                  \
-    -Wundef                     \
-    -Wunreachable-code          \
-    -Wmissing-prototypes        \
-    -Wstrict-prototypes         \
-    -Wnull-dereference          \
-    -MMD -MP                    \
+COMMON_FLAGS := -std=c23 -I$(INC_DIR) -Wall -Wextra -Wpedantic -Wshadow \
+                -Wstrict-aliasing=2 -Wcast-align -Wformat=2 -Wundef \
+                -Wunreachable-code -Wmissing-prototypes -Wstrict-prototypes \
+                -Wnull-dereference -MMD -MP
 
-# Debug build — fast compilation, sanitisers, full warnings
-DEBUG_FLAGS := \
-    $(COMMON_FLAGS)             \
-    -O1                         \
-    -g3                         \
-    -DDEBUG                     \
-    -fsanitize=address,undefined \
-    -fno-omit-frame-pointer     \
-    -fstack-protector-strong    \
-
+DEBUG_FLAGS := $(COMMON_FLAGS) -O1 -g3 -DDEBUG -fsanitize=address,undefined \
+               -fno-omit-frame-pointer -fstack-protector-strong
 DEBUG_LDFLAGS := -fsanitize=address,undefined
 
-# Release / run build — max optimisation, no assertions
-RELEASE_FLAGS := \
-    $(COMMON_FLAGS)             \
-    -O3                         \
-    -DNDEBUG                    \
-    -march=native               \
-    -flto                       \
-    -fomit-frame-pointer        \
-
+RELEASE_FLAGS := $(COMMON_FLAGS) -O3 -DNDEBUG -march=native -flto -fomit-frame-pointer
 RELEASE_LDFLAGS := -flto
 
-# Test / tools build — same as debug but no sanitisers to keep linking simple
-#   (change to DEBUG_FLAGS if you want ASAN in tests too)
-TEST_FLAGS  := $(COMMON_FLAGS) -O1 -g3 -DDEBUG -fstack-protector-strong
-
-# Default build flags (used by `all` / `build`)
-CFLAGS      ?= $(DEBUG_FLAGS)
-LDFLAGS     ?= $(DEBUG_LDFLAGS)
+# Default to Debug for development
+CFLAGS  ?= $(DEBUG_FLAGS)
+LDFLAGS ?= $(DEBUG_LDFLAGS)
 
 # ------------------------------------------------------------------------------
-# Dependency files
+# Primary Targets
 # ------------------------------------------------------------------------------
-DEPS := \
-    $(wildcard $(BUILD_DIR)/src/*.d)       \
-    $(wildcard $(BUILD_DIR)/tests/*.d)     \
-    $(wildcard $(BUILD_DIR)/tools/*.d)     \
-
-# ==============================================================================
-# Default goal
-# ==============================================================================
 .DEFAULT_GOAL := all
-
 .PHONY: all build clean run debug test tools help
 
-# ==============================================================================
-# 1 & 2. all / build  — debug-flagged binary (good default for development)
-# ==============================================================================
-all build: CFLAGS  = $(DEBUG_FLAGS)
-all build: LDFLAGS = $(DEBUG_LDFLAGS)
 all build: $(BIN)
 
 $(BIN): $(LIB_OBJS) $(MAIN_OBJ)
 	@mkdir -p $(@D)
 	@echo "[LD]  $@"
 	$(CC) $(LDFLAGS) $^ -o $@
-	@echo "Done → $@"
 
 # ------------------------------------------------------------------------------
-# Compile production sources → build/src/
+# Pattern Rules (These are key for CLion Visibility)
 # ------------------------------------------------------------------------------
+
+# 1. Standard Production Objects
 $(BUILD_DIR)/src/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	@echo "[CC]  $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# ==============================================================================
-# 3. clean
-# ==============================================================================
+# 2. Test Objects (Explicitly using TEST_DIR)
+$(BUILD_DIR)/tests/%.o: $(TEST_DIR)/%.c
+	@mkdir -p $(@D)
+	@echo "[CC]  $<"
+	$(CC) $(DEBUG_FLAGS) -c $< -o $@
+
+# 3. Tool Objects
+$(BUILD_DIR)/tools/%.o: $(TOOLS_DIR)/%.c
+	@mkdir -p $(@D)
+	@echo "[CC]  $<"
+	$(CC) $(RELEASE_FLAGS) -c $< -o $@
+
+# ------------------------------------------------------------------------------
+# Execution Logic (Tests & Tools)
+# ------------------------------------------------------------------------------
+
+# Link a test binary (depends on its object and all library objects)
+$(BUILD_DIR)/tests/%: $(BUILD_DIR)/tests/%.o $(LIB_OBJS)
+	@echo "[LD]  $@"
+	$(CC) $(DEBUG_LDFLAGS) $^ -o $@
+
+# Link a tool binary
+$(BUILD_DIR)/tools/%: $(BUILD_DIR)/tools/%.o $(LIB_OBJS)
+	@echo "[LD]  $@"
+	$(CC) $(RELEASE_LDFLAGS) $^ -o $@
+
+# Run tests
+test: $(TEST_BINS)
+ifdef FILE
+	@echo "[RUN] $(BUILD_DIR)/tests/$(basename $(FILE))"
+	@$(BUILD_DIR)/tests/$(basename $(FILE))
+else
+	@for t in $(TEST_BINS); do echo "[RUN] $$t"; $$t || exit 1; done
+endif
+
+# Run tools
+tools: $(TOOL_BINS)
+ifdef FILE
+	@echo "[RUN] $(BUILD_DIR)/tools/$(basename $(FILE))"
+	@$(BUILD_DIR)/tools/$(basename $(FILE))
+else
+	@for t in $(TOOL_BINS); do echo "[RUN] $$t"; $$t; done
+endif
+
+# ------------------------------------------------------------------------------
+# JSON Compilation Database (for CLion/LSP)
+# ------------------------------------------------------------------------------
+.PHONY: compiledb
+
+compiledb: clean
+	@echo "[JSON] Generating compile_commands.json..."
+	@bear -- $(MAKE) all test tools
+	@echo "Done. CLion will now see all headers perfectly."
+
+# ------------------------------------------------------------------------------
+# Utilities
+# ------------------------------------------------------------------------------
+run: CFLAGS = $(RELEASE_FLAGS)
+run: LDFLAGS = $(RELEASE_LDFLAGS)
+run: build
+	@echo "[RUN] $(BIN)"
+	$(BIN)
+
+debug: build
+	@echo "[DBG] $(BIN)"
+	$(BIN)
+
 clean:
 	$(RM) $(BUILD_DIR)
 	@echo "Cleaned."
 
-# ==============================================================================
-# 7. run  — release binary, max optimisation, assertions disabled
-# ==============================================================================
-run: CFLAGS  = $(RELEASE_FLAGS)
-run: LDFLAGS = $(RELEASE_LDFLAGS)
-run: $(BIN)
-	@echo "[RUN] $(BIN)"
-	$(BIN)
-
-# ==============================================================================
-# 8. debug  — debug binary with sanitisers; runs immediately
-# ==============================================================================
-debug: CFLAGS  = $(DEBUG_FLAGS)
-debug: LDFLAGS = $(DEBUG_LDFLAGS)
-debug: $(BIN)
-	@echo "[DBG] $(BIN)"
-	$(BIN)
-
-# ==============================================================================
-# 4. test  — compile every tests/*_test.c against lib objects and run each
-# ==============================================================================
-
-# Shared lib objects used by tests (built into build/tests/src/)
-TEST_LIB_OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/tests/src/%.o, $(LIB_SRCS))
-
-$(BUILD_DIR)/tests/src/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	@echo "[CC]  $< (test)"
-	$(CC) $(TEST_FLAGS) -c $< -o $@
-
-# Pattern to build a single test executable
-# Usage: $(call build_test, tests/foo_test.c) → build/tests/foo_test
-define build_and_run_test
-	$(eval _src  := $(1))
-	$(eval _name := $(basename $(notdir $(_src))))
-	$(eval _obj  := $(BUILD_DIR)/tests/$(_name).o)
-	$(eval _bin  := $(BUILD_DIR)/tests/$(_name))
-	@mkdir -p $(BUILD_DIR)/tests
-	@echo "[CC]  $(_src)"
-	$(CC) $(TEST_FLAGS) -c $(_src) -o $(_obj)
-	@echo "[LD]  $(_bin)"
-	$(CC) $(TEST_FLAGS) $(_obj) $(TEST_LIB_OBJS) -o $(_bin)
-	@echo "[RUN] $(_bin)"
-	$(_bin)
-	@echo ""
-endef
-
-test: $(TEST_LIB_OBJS)
-ifdef FILE
-	$(call build_and_run_test,$(TEST_DIR)/$(FILE))
-else
-	@$(foreach src,$(TEST_SRCS),$(call build_and_run_test,$(src)))
-endif
-
-# ==============================================================================
-# 5. test FILE=<name>  — run a single test file
-#    Usage:  make test FILE=move_gen_test.c
-# ==============================================================================
-# Handled by the ifdef FILE branch above.
-
-# ==============================================================================
-# 6. tools  — compile & run every tools/*.c sequentially
-# ==============================================================================
-TOOLS_LIB_OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/tools/src/%.o, $(LIB_SRCS))
-
-$(BUILD_DIR)/tools/src/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	@echo "[CC]  $< (tools)"
-	$(CC) $(RELEASE_FLAGS) -c $< -o $@
-
-define build_and_run_tool
-	$(eval _src  := $(1))
-	$(eval _name := $(basename $(notdir $(_src))))
-	$(eval _obj  := $(BUILD_DIR)/tools/$(_name).o)
-	$(eval _bin  := $(BUILD_DIR)/tools/$(_name))
-	@mkdir -p $(BUILD_DIR)/tools
-	@echo "[CC]  $(_src)"
-	$(CC) $(RELEASE_FLAGS) -c $(_src) -o $(_obj)
-	@echo "[LD]  $(_bin)"
-	$(CC) $(RELEASE_FLAGS) $(_obj) $(TOOLS_LIB_OBJS) -o $(_bin)
-	@echo "[RUN] $(_bin)"
-	$(_bin)
-	@echo ""
-endef
-
-tools: $(TOOLS_LIB_OBJS)
-ifdef FILE
-	$(call build_and_run_tool,$(TOOLS_DIR)/$(FILE))
-else
-	@$(foreach src,$(TOOL_SRCS),$(call build_and_run_tool,$(src)))
-endif
-
-# ==============================================================================
-# Help
-# ==============================================================================
 help:
 	@echo ""
 	@echo "  bit-chess Makefile"
 	@echo "  ------------------"
-	@echo "  make / make all          		Build debug binary → $(BIN)"
-	@echo "  make build               		Same as all"
-	@echo "  make run                 		Build optimised release binary and run"
-	@echo "  make debug               		Build debug binary and run"
-	@echo "  make test                		Build and run ALL tests in tests/"
-	@echo "  make test FILE=foo_test.c  		Build and run a single test"
-	@echo "  make tools               		Build and run ALL tools in tools/"
-	@echo "  make tools FILE=magic_generator.c  	Build and run a single tool"
-	@echo "  make clean               		Remove build/"
+	@printf "  %-35s %s\n" "make / make all" "Build debug binary"
+	@printf "  %-35s %s\n" "make run" "Build release and run"
+	@printf "  %-35s %s\n" "make test" "Run all tests"
+	@printf "  %-35s %s\n" "make test FILE=bitboard_test.c" "Run one test"
+	@printf "  %-35s %s\n" "make clean" "Remove build artifacts"
 	@echo ""
 
-# ==============================================================================
-# Auto-generated dependency inclusion
-# ==============================================================================
--include $(DEPS)
+-include $(wildcard $(BUILD_DIR)/src/*.d)
+-include $(wildcard $(BUILD_DIR)/tests/*.d)

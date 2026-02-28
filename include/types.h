@@ -8,19 +8,24 @@ typedef uint64_t U64;
 typedef uint32_t U32;
 typedef uint8_t U8;
 
-typedef enum {
+typedef enum: U8 {
     COLOR_WHITE, COLOR_BLACK, COLOR_NB
 } Color;
 
-typedef enum {
+typedef enum: U8 {
     RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NB
 } Rank;
 
-typedef enum {
+typedef enum: U8 {
     FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NB
 } File;
 
-typedef enum {
+enum: U8 {
+	FILE_NB_LOG = 3,
+	FILE_NB_REM_MASK = FILE_NB - 1
+};
+
+typedef enum: U8 {
     SQ_A1, SQ_B1, SQ_C1, SQ_D1, SQ_E1, SQ_F1, SQ_G1, SQ_H1, 
     SQ_A2, SQ_B2, SQ_C2, SQ_D2, SQ_E2, SQ_F2, SQ_G2, SQ_H2, 
     SQ_A3, SQ_B3, SQ_C3, SQ_D3, SQ_E3, SQ_F3, SQ_G3, SQ_H3, 
@@ -32,7 +37,7 @@ typedef enum {
     SQ_NB, SQ_NONE
 } Square;
 
-typedef enum {
+typedef enum: U8 {
 	WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
     BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
     PIECE_NB, PIECE_NONE
