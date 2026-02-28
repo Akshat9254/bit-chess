@@ -36,6 +36,14 @@ static inline File file_of_sq(const Square sq) {
 	return file;
 }
 
+static inline Rank char_to_rank(const char rank) {
+	return '1' <= rank && rank <= '8' ? rank - '1' : RANK_NONE;
+}
+
+static inline File char_to_file(const char file) {
+	return 'a' <= file && file <= 'h' ? file - 'a' : FILE_NONE;
+}
+
 static inline Square rank_file_to_sq(const Rank rank, const File file) {
     if (!is_rank_file_on_board(rank, file)) {
         printf("invalid rank: %d, file: %d\n", rank, file);

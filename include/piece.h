@@ -21,4 +21,6 @@ static inline Color piece_color_of(const Piece piece) {
     return piece < BLACK_PAWN ? COLOR_WHITE : COLOR_BLACK;
 }
 
+Piece piece_from_symbol(char symbol);
+
 #endif
