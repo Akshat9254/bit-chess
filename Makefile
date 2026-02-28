@@ -13,6 +13,8 @@ TEST_DIR    := tests
 TOOLS_DIR   := tools
 BUILD_DIR   := build
 
+BIN         := $(BUILD_DIR)/$(TARGET)
+
 # ------------------------------------------------------------------------------
 # Toolchain
 # ------------------------------------------------------------------------------
@@ -103,12 +105,13 @@ DEPS := \
 # ==============================================================================
 all build: CFLAGS  = $(DEBUG_FLAGS)
 all build: LDFLAGS = $(DEBUG_LDFLAGS)
-all build: $(TARGET)
+all build: $(BIN)
 
-$(TARGET): $(LIB_OBJS) $(MAIN_OBJ)
+$(BIN): $(LIB_OBJS) $(MAIN_OBJ)
+	@mkdir -p $(@D)
 	@echo "[LD]  $@"
 	$(CC) $(LDFLAGS) $^ -o $@
-	@echo "Done → ./$@"
+	@echo "Done → $@"
 
 # ------------------------------------------------------------------------------
 # Compile production sources → build/src/
@@ -122,7 +125,7 @@ $(BUILD_DIR)/src/%.o: $(SRC_DIR)/%.c
 # 3. clean
 # ==============================================================================
 clean:
-	$(RM) $(BUILD_DIR) $(TARGET)
+	$(RM) $(BUILD_DIR)
 	@echo "Cleaned."
 
 # ==============================================================================
@@ -130,18 +133,18 @@ clean:
 # ==============================================================================
 run: CFLAGS  = $(RELEASE_FLAGS)
 run: LDFLAGS = $(RELEASE_LDFLAGS)
-run: $(TARGET)
-	@echo "[RUN] ./$(TARGET)"
-	./$(TARGET)
+run: $(BIN)
+	@echo "[RUN] $(BIN)"
+	$(BIN)
 
 # ==============================================================================
 # 8. debug  — debug binary with sanitisers; runs immediately
 # ==============================================================================
 debug: CFLAGS  = $(DEBUG_FLAGS)
 debug: LDFLAGS = $(DEBUG_LDFLAGS)
-debug: $(TARGET)
-	@echo "[DBG] ./$(TARGET)"
-	./$(TARGET)
+debug: $(BIN)
+	@echo "[DBG] $(BIN)"
+	$(BIN)
 
 # ==============================================================================
 # 4. test  — compile every tests/*_test.c against lib objects and run each
@@ -224,15 +227,15 @@ help:
 	@echo ""
 	@echo "  bit-chess Makefile"
 	@echo "  ------------------"
-	@echo "  make / make all          		Build debug binary → ./$(TARGET)"
+	@echo "  make / make all          		Build debug binary → $(BIN)"
 	@echo "  make build               		Same as all"
 	@echo "  make run                 		Build optimised release binary and run"
 	@echo "  make debug               		Build debug binary and run"
 	@echo "  make test                		Build and run ALL tests in tests/"
-	@echo "  make test FILE=foo_test.c 		Build and run a single test"
+	@echo "  make test FILE=foo_test.c  		Build and run a single test"
 	@echo "  make tools               		Build and run ALL tools in tools/"
-	@echo "  make tools FILE=magic_generator.c	Build and run a single tool"
-	@echo "  make clean               		Remove build/ and $(TARGET)"
+	@echo "  make tools FILE=magic_generator.c  	Build and run a single tool"
+	@echo "  make clean               		Remove build/"
 	@echo ""
 
 # ==============================================================================
