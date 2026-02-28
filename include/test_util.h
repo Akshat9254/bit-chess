@@ -25,7 +25,6 @@ return 1; \
  */
 #define ASSERT_UINT64_EQ(expected, actual, func_name) \
 do { \
-printf("[TEST] Running %s...\n", #func_name); \
 uint64_t _exp = (uint64_t)(expected); \
 uint64_t _act = (uint64_t)(actual); \
 if (_exp != _act) { \

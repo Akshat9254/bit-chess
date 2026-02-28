@@ -6,10 +6,11 @@
 typedef uint64_t Bitboard;
 typedef uint64_t U64;
 typedef uint32_t U32;
+typedef uint16_t U16;
 typedef uint8_t U8;
 
 typedef enum: U8 {
-    COLOR_WHITE, COLOR_BLACK, COLOR_NB
+    COLOR_WHITE, COLOR_BLACK, COLOR_BOTH, COLOR_NB
 } Color;
 
 typedef enum: U8 {
@@ -42,5 +43,18 @@ typedef enum: U8 {
     BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
     PIECE_NB, PIECE_NONE
 } Piece;
+
+typedef enum: U8 {
+    CASTLE_NONE = 0,
+    CASTLE_WHITE_OO    = 1,      // 0001 - White Kingside
+    CASTLE_WHITE_OOO   = 2,      // 0010 - White Queenside
+    CASTLE_BLACK_OO    = 4,      // 0100 - Black Kingside
+    CASTLE_BLACK_OOO   = 8,      // 1000 - Black Queenside
+
+    // Helpful Aliases
+    CASTLE_WHITE_ANY   = CASTLE_WHITE_OO | CASTLE_WHITE_OOO, // 0011
+    CASTLE_BLACK_ANY   = CASTLE_BLACK_OO | CASTLE_BLACK_OOO, // 1100
+    CASTLE_ANY = CASTLE_WHITE_ANY | CASTLE_BLACK_ANY // 1111
+} CastlingRights;
 
 #endif
