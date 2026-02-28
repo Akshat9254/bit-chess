@@ -1,79 +1,92 @@
-#include <assert.h>
-
 #include "bitboard.h"
+#include "test_util.h"
 
-static void test_bb_test(void) {
+static int test_bb_test(void) {
     Bitboard bb = 0ULL;
-    assert(bb_test(bb, SQ_A1) == false);
-    assert(bb_test(bb, SQ_H8) == false);
 
+    // Initial state
+    ASSERT_INT_EQ(false, bb_test(bb, SQ_A1), bb_test_empty_A1);
+    ASSERT_INT_EQ(false, bb_test(bb, SQ_H8), bb_test_empty_H8);
+
+    // Set and check
     bb_set(&bb, SQ_A1);
-    assert(bb_test(bb, SQ_A1) == true);
-    assert(bb_test(bb, SQ_H8) == false);
+    ASSERT_INT_EQ(true,  bb_test(bb, SQ_A1), bb_test_set_A1);
+    ASSERT_INT_EQ(false, bb_test(bb, SQ_H8), bb_test_still_empty_H8);
 
     bb_set(&bb, SQ_H8);
-    assert(bb_test(bb, SQ_A1) == true);
-    assert(bb_test(bb, SQ_H8) == true);
+    ASSERT_INT_EQ(true,  bb_test(bb, SQ_A1), bb_test_still_set_A1);
+    ASSERT_INT_EQ(true,  bb_test(bb, SQ_H8), bb_test_set_H8);
 
+    // Clear and check
     bb_clear(&bb, SQ_A1);
-    assert(bb_test(bb, SQ_A1) == false);
-    assert(bb_test(bb, SQ_H8) == true);
+    ASSERT_INT_EQ(false, bb_test(bb, SQ_A1), bb_test_clear_A1);
+    ASSERT_INT_EQ(true,  bb_test(bb, SQ_H8), bb_test_remain_H8);
 
     bb_clear(&bb, SQ_H8);
-    assert(bb_test(bb, SQ_A1) == false);
-    assert(bb_test(bb, SQ_H8) == false);
-}
+    ASSERT_INT_EQ(false, bb_test(bb, SQ_A1), bb_test_final_empty_A1);
+    ASSERT_INT_EQ(false, bb_test(bb, SQ_H8), bb_test_final_empty_H8);
 
-static void test_bb_set_and_clear(void) {
-    Bitboard bb = 0ULL;
-    for (Square sq = SQ_A1; sq <= SQ_H8; sq++) {
-        bb_set(&bb, sq);
-        assert(bb_test(bb, sq) == true);
-    }
-
-    for (Square sq = 0; sq < SQ_NB; sq++) {
-        bb_clear(&bb, sq);
-        assert(bb_test(bb, sq) == false);
-    }
-}
-
-static void test_bb_popcount(void) {
-    Bitboard bb = 0xFF0000ULL;
-    int popcount = bb_popcount(bb);
-    assert(popcount == 8);
-
-    bb = 0ULL;
-    popcount = bb_popcount(bb);
-    assert(popcount == 0);
-}
-
-static void test_bb_find_lssb_index(void) {
-    Bitboard bb = 0xFF0000ULL;
-    int lssb_index = bb_find_lssb_index(bb);
-    assert(lssb_index == 16);
-
-    bb = 0ULL;
-    lssb_index = bb_find_lssb_index(bb);
-    assert(lssb_index == -1);
-}
-
-static void test_bb_pop_lssb(void) {
-    Bitboard bb = 0xFF0000ULL;
-    bb_pop_lssb(&bb);
-    assert(bb == 0xFE0000ULL);
-
-    bb = 0ULL;
-    bb_pop_lssb(&bb);
-    assert(bb == 0ULL);
-}
-
-int main(void) {
-    test_bb_test();
-    test_bb_set_and_clear();
-    test_bb_popcount();
-    test_bb_find_lssb_index();
-    test_bb_pop_lssb();
-    printf("✅ All tests in bitboard_test.c passed.\n");
     return 0;
 }
 
+static int test_bb_set_and_clear(void) {
+    Bitboard bb = 0ULL;
+
+    // Fill the board bit by bit
+    for (Square sq = SQ_A1; sq <= SQ_H8; sq++) {
+        bb_set(&bb, sq);
+        ASSERT_INT_EQ(true, bb_test(bb, sq), bb_set_loop);
+    }
+
+    // Clear the board bit by bit
+    for (Square sq = SQ_A1; sq <= SQ_H8; sq++) {
+        bb_clear(&bb, sq);
+        ASSERT_INT_EQ(false, bb_test(bb, sq), bb_clear_loop);
+    }
+
+    return 0;
+}
+
+static int test_bb_popcount(void) {
+    Bitboard bb = 0xFF0000ULL; // Rank 3 full
+    ASSERT_INT_EQ(8, bb_popcount(bb), bb_popcount_rank3);
+
+    bb = 0ULL;
+    ASSERT_INT_EQ(0, bb_popcount(bb), bb_popcount_empty);
+
+    return 0;
+}
+
+static int test_bb_find_lssb_index(void) {
+    Bitboard bb = 0xFF0000ULL; // LSSB is at SQ_A3 (index 16)
+    ASSERT_INT_EQ(16, bb_find_lssb_index(bb), bb_find_lssb_index_full);
+
+    bb = 0ULL;
+    ASSERT_INT_EQ(-1, bb_find_lssb_index(bb), bb_find_lssb_index_empty);
+
+    return 0;
+}
+
+static int test_bb_pop_lssb(void) {
+    Bitboard bb = 0xFF0000ULL;
+    bb_pop_lssb(&bb);
+    // 0xFF0000 is 11111111 00000000 00000000. Popping LSSB leaves 11111110...
+    ASSERT_UINT64_EQ(0xFE0000ULL, bb, bb_pop_lssb_standard);
+
+    bb = 0ULL;
+    bb_pop_lssb(&bb);
+    ASSERT_UINT64_EQ(0ULL, bb, bb_pop_lssb_empty);
+
+    return 0;
+}
+
+int main(void) {
+    if (test_bb_test() != 0) return 1;
+    if (test_bb_set_and_clear() != 0) return 1;
+    if (test_bb_popcount() != 0) return 1;
+    if (test_bb_find_lssb_index() != 0) return 1;
+    if (test_bb_pop_lssb() != 0) return 1;
+
+    printf("✅ All tests in bitboard_test.c passed.\n");
+    return 0;
+}
