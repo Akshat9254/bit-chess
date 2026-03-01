@@ -6,9 +6,10 @@
 #include "types.h"
 
 extern const char* piece_symbols;
+extern const Color piece_colors[PIECE_NB];
 
 static inline bool is_valid_piece(const Piece piece) {
-    return WHITE_PAWN <= piece && piece <= BLACK_KING;
+    return piece <= BLACK_KING;
 }
 
 static inline char piece_symbol_of(const Piece piece) {
@@ -18,7 +19,7 @@ static inline char piece_symbol_of(const Piece piece) {
 
 static inline Color piece_color_of(const Piece piece) {
     assert(is_valid_piece(piece));
-    return piece < BLACK_PAWN ? COLOR_WHITE : COLOR_BLACK;
+    return piece_colors[piece];
 }
 
 Piece piece_from_symbol(char symbol);

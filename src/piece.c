@@ -1,6 +1,10 @@
 #include "piece.h"
 
 const char* piece_symbols = "PNBRQKpnbrqk  ";
+const Color piece_colors[PIECE_NB] = {
+    COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE,
+    COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK,
+};
 
 Piece piece_from_symbol(const char symbol) {
     switch (symbol) {
