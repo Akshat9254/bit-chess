@@ -87,7 +87,7 @@ $(BUILD_DIR)/tests/%.o: $(TEST_DIR)/%.c
 $(BUILD_DIR)/tools/%.o: $(TOOLS_DIR)/%.c
 	@mkdir -p $(@D)
 	@echo "[CC]  $<"
-	$(CC) $(RELEASE_FLAGS) -c $< -o $@
+	$(CC) $(DEBUG_FLAGS) -c $< -o $@
 
 # ------------------------------------------------------------------------------
 # Execution Logic (Tests & Tools)
@@ -101,7 +101,7 @@ $(BUILD_DIR)/tests/%: $(BUILD_DIR)/tests/%.o $(LIB_OBJS)
 # Link a tool binary
 $(BUILD_DIR)/tools/%: $(BUILD_DIR)/tools/%.o $(LIB_OBJS)
 	@echo "[LD]  $@"
-	$(CC) $(RELEASE_LDFLAGS) $^ -o $@
+	$(CC) $(DEBUG_LDFLAGS) $^ -o $@
 
 # Run tests
 test: $(TEST_BINS)
