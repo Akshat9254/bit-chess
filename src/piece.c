@@ -1,6 +1,6 @@
 #include "piece.h"
 
-const char* piece_symbols = "PNBRQKpnbrqk__";
+const char* piece_symbols = "PNBRQKpnbrqk  ";
 
 Piece piece_from_symbol(const char symbol) {
     switch (symbol) {

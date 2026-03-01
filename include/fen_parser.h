@@ -26,5 +26,6 @@ typedef struct {
 } FenError;
 
 bool fen_init_board(Board *board, const char *fen, FenError *fen_error);
+void fen_serialize_board(const Board *board, char *fen, size_t fen_size);
 
 #endif

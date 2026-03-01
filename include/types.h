@@ -51,7 +51,6 @@ typedef enum: U8 {
     CASTLE_BLACK_OO    = 4,      // 0100 - Black Kingside
     CASTLE_BLACK_OOO   = 8,      // 1000 - Black Queenside
 
-    // Helpful Aliases
     CASTLE_WHITE_ANY   = CASTLE_WHITE_OO | CASTLE_WHITE_OOO, // 0011
     CASTLE_BLACK_ANY   = CASTLE_BLACK_OO | CASTLE_BLACK_OOO, // 1100
     CASTLE_ANY = CASTLE_WHITE_ANY | CASTLE_BLACK_ANY // 1111

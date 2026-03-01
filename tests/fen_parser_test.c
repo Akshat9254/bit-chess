@@ -19,6 +19,10 @@ static int test_fen_startpos(void) {
     ASSERT_INT_EQ(CASTLE_ANY, board.castling_rights, startpos_castling);
     ASSERT_INT_EQ(SQ_NONE, board.enpassant_sq, startpos_ep);
 
+    char fen_output[256];
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(start_fen, fen_output, startpos_fen_serialization);
+
     return 0;
 }
 
@@ -34,6 +38,10 @@ static int test_fen_midgame(void) {
     ASSERT_INT_EQ(BLACK_ROOK, board.mailbox[SQ_A8], midgame_a8_rook);
     // 3 squares empty after r -> SQ_E8 is k (Black King)
     ASSERT_INT_EQ(BLACK_KING, board.mailbox[SQ_E8], midgame_e8_king);
+
+    char fen_output[256];
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(mid_fen, fen_output, mid_fen_serialization);
 
     return 0;
 }
@@ -72,30 +80,47 @@ static int test_fen_en_passant(void) {
     ASSERT_INT_EQ(true, success, ep_parse_status);
     ASSERT_INT_EQ(SQ_E3, board.enpassant_sq, ep_square_match);
 
+    char fen_output[256];
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(ep_fen, fen_output, ep_fen_serialization);
+
     return 0;
 }
 
 static int test_fen_castling_rights(void) {
     Board board;
     FenError err;
+    char fen_output[256];
 
     // 1. All rights in standard order
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w KQkq - 0 1", &err), fen_castle_full_status);
+    const char *all_castling_rights_fen = "8/8/8/8/8/8/8/8 w KQkq - 0 1";
+    ASSERT_INT_EQ(true, fen_init_board(&board, all_castling_rights_fen, &err), fen_castle_full_status);
     ASSERT_INT_EQ(15, board.castling_rights, castle_full_bits);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(all_castling_rights_fen, fen_output, all_castling_rights_fen_serialization);
 
     // 2. Reordered and repeated symbols: "qKkQk"
     // Logic: Should still result in all bits set (15) and not toggle them off.
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w qKkQk - 0 1", &err), fen_castle_repeat_status);
+    const char *reordered_castling_rights_fen = "8/8/8/8/8/8/8/8 w qKkQk - 0 1";
+    ASSERT_INT_EQ(true, fen_init_board(&board, reordered_castling_rights_fen, &err), fen_castle_repeat_status);
     ASSERT_INT_EQ(15, board.castling_rights, castle_repeat_bits);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ("8/8/8/8/8/8/8/8 w KQkq - 0 1", fen_output, reordered_castling_rights_fen_serialization);
 
     // 3. Partial rights: "Kq" (White Kingside + Black Queenside)
     // Binary: 0001 | 1000 = 9
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w Kq - 0 1", &err), fen_castle_partial_status);
+    const char *partial_castling_rights_fen = "8/8/8/8/8/8/8/8 w Kq - 0 1";
+    ASSERT_INT_EQ(true, fen_init_board(&board, partial_castling_rights_fen, &err), fen_castle_partial_status);
     ASSERT_INT_EQ(9, board.castling_rights, castle_partial_bits);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(partial_castling_rights_fen, fen_output, partial_castling_rights_fen_serialization);
 
     // 4. No rights: "-"
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w - - 0 1", &err), fen_castle_none_status);
+    const char *no_castling_rights_fen = "8/8/8/8/8/8/8/8 w - - 0 1";
+    ASSERT_INT_EQ(true, fen_init_board(&board, no_castling_rights_fen, &err), fen_castle_none_status);
     ASSERT_INT_EQ(0, board.castling_rights, castle_none_bits);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(no_castling_rights_fen, fen_output, no_castling_rights_fen_serialization);
 
     return 0;
 }
@@ -103,22 +128,32 @@ static int test_fen_castling_rights(void) {
 static int test_fen_clocks(void) {
     Board board;
     FenError err;
+    char fen_output[256];
 
     // 1. Standard start values
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w - - 0 1", &err), fen_clock_start_status);
+    const char *standard_clock_values_fen = "8/8/8/8/8/8/8/8 w - - 0 1";
+    ASSERT_INT_EQ(true, fen_init_board(&board, standard_clock_values_fen, &err), fen_clock_start_status);
     ASSERT_INT_EQ(0, board.half_move_clock, half_move_start);
     ASSERT_INT_EQ(1, board.full_move_number, full_move_start);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(standard_clock_values_fen, fen_output, standard_clock_values_fen_serialization);
 
     // 2. High values (testing multi-digit sscanf logic)
     // 49 half-moves (one before 50-move draw), 125 full moves
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w - - 49 125", &err), fen_clock_high_status);
+    const char *multidigit_clock_values_fen = "8/8/8/8/8/8/8/8 w - - 49 125";
+    ASSERT_INT_EQ(true, fen_init_board(&board, multidigit_clock_values_fen, &err), fen_clock_high_status);
     ASSERT_INT_EQ(49, board.half_move_clock, half_move_high);
     ASSERT_INT_EQ(125, board.full_move_number, full_move_high);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(multidigit_clock_values_fen, fen_output, multidigit_clock_values_fen_serialization);
 
     // 3. Maximum U8 value for half-move (255)
-    ASSERT_INT_EQ(true, fen_init_board(&board, "8/8/8/8/8/8/8/8 w - - 255 1000", &err), fen_clock_max_status);
+    const char *max_half_move_value_fen = "8/8/8/8/8/8/8/8 w - - 255 1000";
+    ASSERT_INT_EQ(true, fen_init_board(&board, max_half_move_value_fen, &err), fen_clock_max_status);
     ASSERT_INT_EQ(255, board.half_move_clock, half_move_max);
     ASSERT_INT_EQ(1000, board.full_move_number, full_move_max);
+    fen_serialize_board(&board, fen_output, sizeof(fen_output));
+    ASSERT_STR_EQ(max_half_move_value_fen, fen_output, max_half_move_value_fen_serialization);
 
     return 0;
 }

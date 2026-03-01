@@ -52,6 +52,58 @@ bool fen_init_board(Board *board, const char *fen, FenError *fen_error) {
     return true;
 }
 
+void fen_serialize_board(const Board *board, char *fen, const size_t fen_size) {
+    assert(board);
+    assert(fen);
+
+    size_t i = 0;
+
+    for (Rank rank = RANK_8; rank <= RANK_8; rank--) {
+        U8 empty_count = 0;
+        for (File file = FILE_A; file <= FILE_H; file++) {
+            const Square sq = rank_file_to_sq(rank, file);
+            const Piece piece = board->mailbox[sq];
+
+            if (piece == PIECE_NONE) {
+                empty_count++;
+            } else {
+                if (empty_count > 0) fen[i++] = (char)(empty_count + '0');
+                empty_count = 0;
+                fen[i++] = piece_symbol_of(piece);
+            }
+        }
+        if (empty_count > 0) fen[i++] = (char)(empty_count + '0');
+        if (rank > RANK_1) fen[i++] = '/';
+    }
+
+    fen[i++] = ' ';
+
+    char c_str[5] = {0};
+    int c_idx = 0;
+    if (board->castling_rights == CASTLE_NONE) {
+        c_str[c_idx] = '-';
+    } else {
+        if (board->castling_rights & CASTLE_WHITE_OO)  c_str[c_idx++] = 'K';
+        if (board->castling_rights & CASTLE_WHITE_OOO) c_str[c_idx++] = 'Q';
+        if (board->castling_rights & CASTLE_BLACK_OO)  c_str[c_idx++] = 'k';
+        if (board->castling_rights & CASTLE_BLACK_OOO) c_str[c_idx] = 'q';
+    }
+
+    char ep_str[3] = "-";
+    if (board->enpassant_sq != SQ_NONE) {
+        ep_str[0] = (char)(file_of_sq(board->enpassant_sq) + 'a');
+        ep_str[1] = (char)(rank_of_sq(board->enpassant_sq) + '1');
+        ep_str[2] = '\0';
+    }
+
+    snprintf(fen + i, fen_size - i, "%c %s %s %u %u",
+             board->side_to_move == COLOR_WHITE ? 'w' : 'b',
+             c_str,
+             ep_str,
+             board->half_move_clock,
+             board->full_move_number);
+}
+
 static bool skip_space(const char **p, FenError *err, const char *msg) {
     if (**p != ' ') {
         set_error(err, FEN_ERR_INVALID_SEGMENT_SEPARATOR, msg);
@@ -63,7 +115,6 @@ static bool skip_space(const char **p, FenError *err, const char *msg) {
 }
 
 static bool parse_pieces(Board *board, const char **p, FenError *err) {
-    // Note the corrected loop condition: rank >= RANK_1
     for (int r = RANK_8; r >= RANK_1; r--) {
         for (int f = FILE_A; f <= FILE_H; ) {
             char c = **p;

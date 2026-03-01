@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "board.h"
+#include "fen_parser.h"
 #include "piece.h"
 
 void clear_board(Board *board) {
@@ -40,4 +41,34 @@ void clear_sq(Board *board, const Square sq) {
     bb_clear(&board->occupied[piece_color], sq);
     bb_clear(&board->occupied[COLOR_BOTH], sq);
     board->mailbox[sq] = PIECE_NONE;
+}
+
+void print_board(const Board* board) {
+    printf("\n");
+
+    for (Rank rank = RANK_8; rank <= RANK_8; rank--) {
+        printf("  ");
+        for (File file = FILE_A; file <= FILE_H; file++) {
+            printf("+---");
+        }
+        printf("+\n");
+        printf("  ");
+        for (File file = FILE_A; file <= FILE_H; file++) {
+            const Square sq = rank_file_to_sq(rank, file);
+            const Piece piece = board->mailbox[sq];
+            printf("| %c ", piece_symbol_of(piece));
+        }
+
+        printf("|  %d \n", rank + 1);
+    }
+
+    printf("  ");
+    for (File file = FILE_A; file <= FILE_H; file++) {
+        printf("+---");
+    }
+    printf("+\n");
+    printf("    a   b   c   d   e   f   g   h\n\n");
+    char fen_str[256];
+    fen_serialize_board(board, fen_str, sizeof(fen_str));
+    printf("FEN: %s\n", fen_str);
 }

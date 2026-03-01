@@ -19,6 +19,7 @@ typedef struct {
 void clear_board(Board *board);
 void place_piece_on_sq(Board *board, Piece piece, Square sq);
 void clear_sq(Board *board, Square sq);
+void print_board(const Board* board);
 
 static inline bool is_sq_empty(const Board *board, const Square sq) {
     return board->mailbox[sq] == PIECE_NONE;

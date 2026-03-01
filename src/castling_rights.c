@@ -1,6 +1,6 @@
 #include "castling_rights.h"
 
-CastlingRights char_to_castling_rights(const char c) {
+inline CastlingRights char_to_castling_rights(const char c) {
     switch (c) {
         case 'K': return CASTLE_WHITE_OO;
         case 'Q': return CASTLE_WHITE_OOO;
