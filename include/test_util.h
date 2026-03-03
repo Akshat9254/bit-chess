@@ -54,4 +54,19 @@ return 1; \
 } \
 } while (0)
 
+/**
+ * ASSERT_TRUE: Compares two booleans
+ */
+#define ASSERT_BOOL_EQ(expected, actual, func_name) \
+do { \
+const bool _exp = (bool) (expected); \
+const bool _act = (bool) (actual); \
+if (_exp != _act) { \
+printf("  [FAIL] %s (Line %d)\n", #func_name, __LINE__); \
+printf("    Expected: \"%s\"\n", (_exp) ? "true" : "false"); \
+printf("    Actual:   \"%s\"\n", (_act) ? "true": "false"); \
+return 1; \
+} \
+} while (0)
+
 #endif

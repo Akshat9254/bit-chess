@@ -24,6 +24,11 @@ void clear_board(Board *board) {
     board->kings_sq[COLOR_WHITE] = board->kings_sq[COLOR_BLACK] = SQ_NONE;
 }
 
+void reset_board(Board *board) {
+    FenError err;
+    assert(fen_init_board(board, FEN_START_POS, &err));
+}
+
 void place_piece_on_sq(Board *board, const Piece piece, const Square sq) {
     assert(piece != PIECE_NONE);
     assert(sq != SQ_NONE);

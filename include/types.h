@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 typedef uint64_t Bitboard;
+typedef uint16_t Move;
 typedef uint64_t U64;
 typedef uint32_t U32;
 typedef uint16_t U16;
@@ -24,6 +25,16 @@ typedef enum: U8 {
 enum: U8 {
 	FILE_NB_LOG = 3,
 	FILE_NB_REM_MASK = FILE_NB - 1
+};
+
+enum: Bitboard {
+    RANK_1_MASK = 0x00000000000000ffULL,
+    RANK_3_MASK = 0x0000000000ff0000ULL,
+    RANK_6_MASK = 0x0000ff0000000000ULL,
+    RANK_8_MASK = 0xff00000000000000ULL,
+
+    NOT_A_FILE = 0xfefefefefefefefeULL,
+    NOT_H_FILE = 0x7f7f7f7f7f7f7f7fULL
 };
 
 typedef enum: U8 {

@@ -18,6 +18,7 @@ typedef struct {
 } Board;
 
 void clear_board(Board *board);
+void reset_board(Board *board);
 void place_piece_on_sq(Board *board, Piece piece, Square sq);
 void clear_sq(Board *board, Square sq);
 bool is_sq_attacked(const Board *board, Square sq, Color attacker);
