@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "piece.h"
 #include "types.h"
 
 #define MAX_MOVES 256
@@ -50,6 +51,26 @@ static inline Square move_get_to(const Move move) {
 
 static inline U8 move_get_flags(const Move move) {
     return ((move >> 12) & 0x0f);
+}
+
+static inline bool is_capture(const U8 flags) {
+    return (flags & 0x4);
+}
+
+static inline bool is_promo(const U8 flags) {
+    return (flags & 0x8);
+}
+
+static inline bool is_castle(const U8 flags) {
+    return (flags & 0x0e) == 2;
+}
+
+static inline Piece move_get_promo_piece(const U8 flags, const Color color) {
+    const U8 color_offset = color * PIECE_PER_SIDE;
+    const U8 piece_offset = flags & 0x3;
+    const Piece piece = WHITE_KNIGHT + color_offset + piece_offset;
+    assert(is_valid_piece(piece));
+    return piece;
 }
 
 static inline void add_move(MoveList *move_list, const Move move) {

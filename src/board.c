@@ -2,13 +2,31 @@
 #include <string.h>
 
 #include "board.h"
+
 #include "fen_parser.h"
 #include "leaper_attack_tables.h"
 #include "magic_attack_tables.h"
+#include "move.h"
 #include "piece.h"
 
 static const bool is_king_piece[PIECE_NB] = {
     [WHITE_KING] = true, [BLACK_KING] = true
+};
+
+static const struct { Square from, to; } CASTLE_ROOK_MOVES[COLOR_BOTH][2] = {
+    { {SQ_H1, SQ_F1}, {SQ_A1, SQ_D1} },
+    { {SQ_H8, SQ_F8}, {SQ_A8, SQ_D8} }
+};
+
+static const U8 CASTLE_RIGHTS_MASK[SQ_NB] = {
+    0x0d, 0x0f, 0x0f, 0x0f, 0x0c, 0x0f, 0x0f, 0x0e,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+    0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
+    0x07, 0x0f, 0x0f, 0x0f, 0x03, 0x0f, 0x0f, 0x0b
 };
 
 void clear_board(Board *board) {
@@ -60,6 +78,102 @@ void clear_sq(Board *board, const Square sq) {
 
     if (is_king_piece[piece]) {
         board->kings_sq[piece_color] = SQ_NONE;
+    }
+}
+
+void make_move(Board *board, const Move move, StateInfo *state) {
+    const Square from = move_get_from(move);
+    const Square to = move_get_to(move);
+    const U8 flags = move_get_flags(move);
+    const Piece moved_piece = board->mailbox[from];
+    const Color us = board->side_to_move;
+
+    assert(from != SQ_NONE);
+    assert(flags <= MOVE_PROMO_Q_CAP);
+    assert(moved_piece != PIECE_NONE);
+
+    state->move = move;
+    state->castling_rights = board->castling_rights;
+    state->en_passant_sq = board->enpassant_sq;
+    state->half_move_clock = board->half_move_clock;
+    state->captured_piece = PIECE_NONE;
+
+    if (is_capture(flags)) {
+        const Square cap_sq = (flags == MOVE_ENPASSANT) ? (us == COLOR_WHITE ? to - 8 : to + 8) : to;
+        state->captured_piece = board->mailbox[cap_sq];
+        clear_sq(board, cap_sq);
+    }
+
+    clear_sq(board, from);
+
+    if (is_promo(flags)) {
+        const Piece promo_piece = move_get_promo_piece(flags, us);
+        place_piece_on_sq(board, promo_piece, to);
+    } else {
+        place_piece_on_sq(board, moved_piece, to);
+    }
+
+    if (is_castle(flags)) {
+        const bool is_queen_side_castle = flags == MOVE_QUEEN_CASTLE;
+        const Square rook_from = CASTLE_ROOK_MOVES[us][is_queen_side_castle].from;
+        const Square rook_to = CASTLE_ROOK_MOVES[us][is_queen_side_castle].to;
+        const Piece rook = board->mailbox[rook_from];
+        move_piece(board, rook, rook_from, rook_to);
+    }
+
+    board->castling_rights &= CASTLE_RIGHTS_MASK[from] & CASTLE_RIGHTS_MASK[to];
+    board->enpassant_sq = (flags == MOVE_PAWN_DOUBLE_PUSH) ? (from + to) >> 1 : SQ_NONE;
+    board->side_to_move ^= 1;
+    if (is_capture(flags) || moved_piece == WHITE_PAWN || moved_piece == BLACK_PAWN) {
+        board->half_move_clock = 0;
+    } else {
+        board->half_move_clock++;
+    }
+
+    if (us == COLOR_BLACK) {
+        board->full_move_number++;
+    }
+}
+
+void unmake_move(Board *board, const StateInfo *state) {
+    const Move move = state->move;
+    const Square from = move_get_from(move);
+    const Square to = move_get_to(move);
+    const U8 flags = move_get_flags(move);
+
+    const Piece moved_piece = board->mailbox[to];
+    const Color moved_piece_color = board->side_to_move ^ 1;
+
+    clear_sq(board, to);
+
+    if (is_promo(flags)) {
+        const Piece pawn = WHITE_PAWN + moved_piece_color * PIECE_PER_SIDE;
+        place_piece_on_sq(board, pawn, from);
+    } else {
+        place_piece_on_sq(board, moved_piece, from);
+    }
+
+    if (is_capture(flags)) {
+        const Square cap_sq = (flags == MOVE_ENPASSANT) ? (moved_piece_color == COLOR_WHITE ? to - 8 : to + 8) : to;
+        const Piece captured_piece = state->captured_piece;
+        place_piece_on_sq(board, captured_piece, cap_sq);
+    }
+
+    if (is_castle(flags)) {
+        const bool is_queen_side_castle = flags == MOVE_QUEEN_CASTLE;
+        const Square rook_from = CASTLE_ROOK_MOVES[moved_piece_color][is_queen_side_castle].from;
+        const Square rook_to = CASTLE_ROOK_MOVES[moved_piece_color][is_queen_side_castle].to;
+        const Piece rook = WHITE_ROOK + moved_piece_color * PIECE_PER_SIDE;
+        move_piece(board, rook, rook_to, rook_from);
+    }
+
+    board->castling_rights = state->castling_rights;
+    board->enpassant_sq = state->en_passant_sq;
+    board->side_to_move = moved_piece_color;
+    board->half_move_clock = state->half_move_clock;
+
+    if (moved_piece_color == COLOR_BLACK) {
+        board->full_move_number--;
     }
 }
 

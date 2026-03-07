@@ -13,14 +13,27 @@ static inline Bitboard pawn_push(Bitboard pawns, Color color);
 static inline Bitboard pawn_left_cap(Bitboard pawns, Color color);
 static inline Bitboard pawn_right_cap(Bitboard pawns, Color color);
 
-void generate_all_legal_moves(const Board *board, MoveList *legal_moves) {
-    MoveList pseudo_legal_moves;
+void generate_all_legal_moves(Board *board, MoveList *legal_moves) {
+    MoveList pseudo_legal_moves = {0};
     generate_all_pawn_legal_moves(board, &pseudo_legal_moves);
     generate_all_knight_legal_moves(board, &pseudo_legal_moves);
     generate_all_bishop_legal_moves(board, &pseudo_legal_moves);
     generate_all_rook_legal_moves(board, &pseudo_legal_moves);
     generate_all_queen_legal_moves(board, &pseudo_legal_moves);
     generate_all_king_legal_moves(board, &pseudo_legal_moves);
+
+    for (size_t i = 0; i < pseudo_legal_moves.count; i++) {
+        const Move move = pseudo_legal_moves.moves[i];
+        StateInfo state;
+
+        make_move(board, move, &state);
+
+        if (!is_king_in_check(board, board->side_to_move ^ 1)) {
+            legal_moves->moves[legal_moves->count++] = move;
+        }
+
+        unmake_move(board, &state);
+    }
 }
 
 void generate_all_pawn_legal_moves(const Board *board, MoveList *pseudo_legal_moves) {

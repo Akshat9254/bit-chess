@@ -4,7 +4,7 @@
 #include "board.h"
 #include "move.h"
 
-void generate_all_legal_moves(const Board *board, MoveList *legal_moves);
+void generate_all_legal_moves(Board *board, MoveList *legal_moves);
 void generate_all_pawn_legal_moves(const Board *board, MoveList *pseudo_legal_moves);
 void generate_all_knight_legal_moves(const Board *board, MoveList *pseudo_legal_moves);
 void generate_all_bishop_legal_moves(const Board *board, MoveList *pseudo_legal_moves);
