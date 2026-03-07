@@ -105,6 +105,10 @@ void fen_serialize_board(const Board *board, char *fen, const size_t fen_size) {
 }
 
 static bool skip_space(const char **p, FenError *err, const char *msg) {
+    if (**p == '\0') {
+        return true;
+    }
+
     if (**p != ' ') {
         set_error(err, FEN_ERR_INVALID_SEGMENT_SEPARATOR, msg);
         return false;
@@ -206,6 +210,11 @@ static bool parse_enpassant_square(Board *board, const char **p, FenError *err) 
 }
 
 static bool parse_half_move_clock(Board *board, const char **p, FenError *err) {
+    if (**p == '\0') {
+        board->half_move_clock = 0;
+        return true;
+    }
+
     if (!isdigit(**p)) {
         set_error(err, FEN_ERR_INVALID_HALF_MOVE_CLOCK, "Expected integer for half move clock");
         return false;
@@ -222,6 +231,11 @@ static bool parse_half_move_clock(Board *board, const char **p, FenError *err) {
 }
 
 static bool parse_full_move_number(Board *board, const char **p, FenError *err) {
+    if (**p == '\0') {
+        board->full_move_number = 0;
+        return true;
+    }
+
     if (!isdigit(**p)) {
         set_error(err, FEN_ERR_INVALID_FULL_MOVE_NUMBER, "Expected integer for full move number");
         return false;

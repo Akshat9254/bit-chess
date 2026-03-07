@@ -44,6 +44,10 @@ static inline bool is_king_in_check(const Board *board, const Color color) {
     return is_sq_attacked(board, board->kings_sq[color], color ^ 1);
 }
 
+static inline bool is_king_alive(const Board *board, const Color color) {
+    return board->pieces[WHITE_KING + color * PIECE_PER_SIDE] > 0;
+}
+
 static inline bool is_sq_empty(const Board *board, const Square sq) {
     return board->mailbox[sq] == PIECE_NONE;
 }

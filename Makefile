@@ -8,6 +8,7 @@ SRC_DIR     := src
 INC_DIR     := include
 TEST_DIR    := tests
 TOOLS_DIR   := tools
+PERFT_DIR   := perft
 BUILD_DIR   := build
 
 BIN         := $(BUILD_DIR)/$(TARGET)
@@ -34,6 +35,9 @@ TEST_BINS   := $(patsubst $(TEST_DIR)/%.c, $(BUILD_DIR)/tests/%, $(TEST_SRCS))
 
 TOOL_SRCS   := $(wildcard $(TOOLS_DIR)/*.c)
 TOOL_BINS   := $(patsubst $(TOOLS_DIR)/%.c, $(BUILD_DIR)/tools/%, $(TOOL_SRCS))
+
+PERFT_SRCS   := $(wildcard $(PERFT_DIR)/*.c)
+PERFT_BINS   := $(patsubst $(PERFT_DIR)/%.c, $(BUILD_DIR)/perft/%, $(PERFT_SRCS))
 
 # ------------------------------------------------------------------------------
 # Flags
@@ -89,6 +93,12 @@ $(BUILD_DIR)/tools/%.o: $(TOOLS_DIR)/%.c
 	@echo "[CC]  $<"
 	$(CC) $(DEBUG_FLAGS) -c $< -o $@
 
+# 4. Perft Objects (Explicitly using PERFT_DIR)
+$(BUILD_DIR)/perft/%.o: $(PERFT_DIR)/%.c
+	@mkdir -p $(@D)
+	@echo "[CC]  $<"
+	$(CC) $(DEBUG_FLAGS) -c $< -o $@
+
 # ------------------------------------------------------------------------------
 # Execution Logic (Tests & Tools)
 # ------------------------------------------------------------------------------
@@ -100,6 +110,11 @@ $(BUILD_DIR)/tests/%: $(BUILD_DIR)/tests/%.o $(LIB_OBJS)
 
 # Link a tool binary
 $(BUILD_DIR)/tools/%: $(BUILD_DIR)/tools/%.o $(LIB_OBJS)
+	@echo "[LD]  $@"
+	$(CC) $(DEBUG_LDFLAGS) $^ -o $@
+
+# Link a test binary (depends on its object and all library objects)
+$(BUILD_DIR)/perft/%: $(BUILD_DIR)/perft/%.o $(LIB_OBJS)
 	@echo "[LD]  $@"
 	$(CC) $(DEBUG_LDFLAGS) $^ -o $@
 
@@ -121,6 +136,15 @@ else
 	@for t in $(TOOL_BINS); do echo "[RUN] $$t"; $$t; done
 endif
 
+# Run perft
+perft: $(PERFT_BINS)
+ifdef FILE
+	@echo "[RUN] $(BUILD_DIR)/perft/$(basename $(FILE))"
+	@$(BUILD_DIR)/perft/$(basename $(FILE))
+else
+	@for t in $(PERFT_BINS); do echo "[RUN] $$t"; $$t || exit 1; done
+endif
+
 # ------------------------------------------------------------------------------
 # JSON Compilation Database (for CLion/LSP)
 # ------------------------------------------------------------------------------
@@ -128,7 +152,7 @@ endif
 
 compiledb: clean
 	@echo "[JSON] Generating compile_commands.json..."
-	@bear -- $(MAKE) all test tools
+	@bear -- $(MAKE) all test tools perft
 	@echo "Done. CLion will now see all headers perfectly."
 
 # ------------------------------------------------------------------------------
@@ -156,8 +180,14 @@ help:
 	@printf "  %-35s %s\n" "make run" "Build release and run"
 	@printf "  %-35s %s\n" "make test" "Run all tests"
 	@printf "  %-35s %s\n" "make test FILE=bitboard_test.c" "Run one test"
+	@printf "  %-35s %s\n" "make tools" "Run all tools"
+	@printf "  %-35s %s\n" "make tools FILE=magic_attacks_generator.c" "Run one tool"
+	@printf "  %-35s %s\n" "make perft" "Run all perft"
+	@printf "  %-35s %s\n" "make tools FILE=perft_test_pos_1.c" "Run one perft"
 	@printf "  %-35s %s\n" "make clean" "Remove build artifacts"
 	@echo ""
 
 -include $(wildcard $(BUILD_DIR)/src/*.d)
 -include $(wildcard $(BUILD_DIR)/tests/*.d)
+-include $(wildcard $(BUILD_DIR)/tools/*.d)
+-include $(wildcard $(BUILD_DIR)/perft/*.d)
