@@ -15,6 +15,10 @@
  * 00000: from square (6 bits)
  */
 
+enum: U16 {
+    MOVE_NONE = 0
+};
+
 enum: U8 {
     MOVE_QUIET              = 0,    // 0000
     MOVE_PAWN_DOUBLE_PUSH   = 1,    // 0001
@@ -35,7 +39,10 @@ enum: U8 {
 typedef struct {
     size_t count;
     Move moves[MAX_MOVES];
+    U16 scores[MAX_MOVES];
 } MoveList;
+
+void move_to_string(Move move, Color color, char *str, size_t size);
 
 static inline Move create_move(const Square from, const Square to, const U8 flags) {
     return (Move) (from | (to << 6) | (flags << 12));
