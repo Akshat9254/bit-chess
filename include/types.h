@@ -5,6 +5,7 @@
 
 typedef uint64_t Bitboard;
 typedef uint16_t Move;
+typedef uint64_t ZobristHash;
 typedef uint64_t U64;
 typedef uint32_t U32;
 typedef uint16_t U16;
