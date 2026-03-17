@@ -15,6 +15,8 @@ typedef struct {
 
     U8 half_move_clock;
     U16 full_move_number;
+
+    ZobristHash hash;
 } Board;
 
 typedef struct StateInfo {

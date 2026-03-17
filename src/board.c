@@ -8,6 +8,7 @@
 #include "magic_attack_tables.h"
 #include "move.h"
 #include "piece.h"
+#include "zobrist.h"
 
 static const bool is_king_piece[PIECE_NB] = {
     [WHITE_KING] = true, [BLACK_KING] = true
@@ -44,7 +45,10 @@ void clear_board(Board *board) {
 
 void reset_board(Board *board) {
     FenError err;
-    assert(fen_init_board(board, FEN_START_POS, &err));
+    const bool result = fen_init_board(board, FEN_START_POS, &err);
+    if (!result) {
+        perror(err.message);
+    }
 }
 
 void place_piece_on_sq(Board *board, const Piece piece, const Square sq) {
@@ -100,16 +104,21 @@ void make_move(Board *board, const Move move, StateInfo *state) {
 
     if (is_capture(flags)) {
         const Square cap_sq = (flags == MOVE_ENPASSANT) ? (us == COLOR_WHITE ? to - 8 : to + 8) : to;
-        state->captured_piece = board->mailbox[cap_sq];
+        const Piece cap_piece = board->mailbox[cap_sq];
+        state->captured_piece = cap_piece;
+        board->hash ^= ZOBRIST_PIECE_KEYS[cap_piece][cap_sq];
         clear_sq(board, cap_sq);
     }
 
+    board->hash ^= ZOBRIST_PIECE_KEYS[moved_piece][from];
     clear_sq(board, from);
 
     if (is_promo(flags)) {
         const Piece promo_piece = move_get_promo_piece(flags, us);
+        board->hash ^= ZOBRIST_PIECE_KEYS[promo_piece][to];
         place_piece_on_sq(board, promo_piece, to);
     } else {
+        board->hash ^= ZOBRIST_PIECE_KEYS[moved_piece][to];
         place_piece_on_sq(board, moved_piece, to);
     }
 
@@ -118,6 +127,7 @@ void make_move(Board *board, const Move move, StateInfo *state) {
         const Square rook_from = CASTLE_ROOK_MOVES[us][is_queen_side_castle].from;
         const Square rook_to = CASTLE_ROOK_MOVES[us][is_queen_side_castle].to;
         const Piece rook = board->mailbox[rook_from];
+        board->hash ^= ZOBRIST_PIECE_KEYS[rook][rook_from] ^ ZOBRIST_PIECE_KEYS[rook][rook_to];
         move_piece(board, rook, rook_from, rook_to);
     }
 
@@ -133,6 +143,10 @@ void make_move(Board *board, const Move move, StateInfo *state) {
     if (us == COLOR_BLACK) {
         board->full_move_number++;
     }
+
+    board->hash ^= ZOBRIST_CASTLING_KEYS[state->castling_rights] ^ ZOBRIST_CASTLING_KEYS[board->castling_rights];
+    board->hash ^= ZOBRIST_EN_PASSANT_KEYS[state->en_passant_sq] ^ ZOBRIST_EN_PASSANT_KEYS[board->enpassant_sq];
+    board->hash ^= ZOBRIST_SIDE_TO_MOVE_KEY[COLOR_WHITE] ^ ZOBRIST_SIDE_TO_MOVE_KEY[COLOR_BLACK];
 }
 
 void unmake_move(Board *board, const StateInfo *state) {
@@ -144,19 +158,23 @@ void unmake_move(Board *board, const StateInfo *state) {
     const Piece moved_piece = board->mailbox[to];
     const Color moved_piece_color = board->side_to_move ^ 1;
 
+    board->hash ^= ZOBRIST_PIECE_KEYS[moved_piece][to];
     clear_sq(board, to);
 
     if (is_promo(flags)) {
         const Piece pawn = WHITE_PAWN + moved_piece_color * PIECE_PER_SIDE;
+        board->hash ^= ZOBRIST_PIECE_KEYS[pawn][from];
         place_piece_on_sq(board, pawn, from);
     } else {
+        board->hash ^= ZOBRIST_PIECE_KEYS[moved_piece][from];
         place_piece_on_sq(board, moved_piece, from);
     }
 
     if (is_capture(flags)) {
         const Square cap_sq = (flags == MOVE_ENPASSANT) ? (moved_piece_color == COLOR_WHITE ? to - 8 : to + 8) : to;
-        const Piece captured_piece = state->captured_piece;
-        place_piece_on_sq(board, captured_piece, cap_sq);
+        const Piece cap_piece = state->captured_piece;
+        board->hash ^= ZOBRIST_PIECE_KEYS[cap_piece][cap_sq];
+        place_piece_on_sq(board, cap_piece, cap_sq);
     }
 
     if (is_castle(flags)) {
@@ -164,8 +182,13 @@ void unmake_move(Board *board, const StateInfo *state) {
         const Square rook_from = CASTLE_ROOK_MOVES[moved_piece_color][is_queen_side_castle].from;
         const Square rook_to = CASTLE_ROOK_MOVES[moved_piece_color][is_queen_side_castle].to;
         const Piece rook = WHITE_ROOK + moved_piece_color * PIECE_PER_SIDE;
+        board->hash ^= ZOBRIST_PIECE_KEYS[rook][rook_from] ^ ZOBRIST_PIECE_KEYS[rook][rook_to];
         move_piece(board, rook, rook_to, rook_from);
     }
+
+    board->hash ^= ZOBRIST_CASTLING_KEYS[state->castling_rights] ^ ZOBRIST_CASTLING_KEYS[board->castling_rights];
+    board->hash ^= ZOBRIST_EN_PASSANT_KEYS[state->en_passant_sq] ^ ZOBRIST_EN_PASSANT_KEYS[board->enpassant_sq];
+    board->hash ^= ZOBRIST_SIDE_TO_MOVE_KEY[COLOR_WHITE] ^ ZOBRIST_SIDE_TO_MOVE_KEY[COLOR_BLACK];
 
     board->castling_rights = state->castling_rights;
     board->enpassant_sq = state->en_passant_sq;
