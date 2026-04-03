@@ -10,7 +10,7 @@ extern const Color piece_colors[PIECE_NB];
 extern const PieceType piece_types[PIECE_NB];
 
 static inline bool is_valid_piece(const Piece piece) {
-    return piece <= BLACK_KING;
+    return piece <= BLACK_KING || piece == PIECE_NONE;
 }
 
 static inline char piece_symbol_of(const Piece piece) {
