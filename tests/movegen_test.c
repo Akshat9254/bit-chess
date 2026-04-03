@@ -16,7 +16,7 @@ static  int test_pawn_move_generation() {
     // --- CASE 1: White Start Position (Quiet + Double Pushes) ---
     reset_board(&board);
     list.count = 0;
-    generate_all_pawn_legal_moves(&board, &list);
+    generate_all_pawn_pseudo_legal_moves(&board, &list);
 
     ASSERT_INT_EQ(16, list.count, "White Start Total Moves");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_E2, SQ_E3, MOVE_QUIET), "e2e3 exists");
@@ -25,7 +25,7 @@ static  int test_pawn_move_generation() {
     // --- CASE 2: Black Start Position (Mirror Check) ---
     board.side_to_move = COLOR_BLACK;
     list.count = 0;
-    generate_all_pawn_legal_moves(&board, &list);
+    generate_all_pawn_pseudo_legal_moves(&board, &list);
 
     ASSERT_INT_EQ(16, list.count, "Black Start Total Moves");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_E7, SQ_E6, MOVE_QUIET), "e7e6 exists");
@@ -40,7 +40,7 @@ static  int test_pawn_move_generation() {
     place_piece_on_sq(&board, WHITE_PAWN, SQ_D5); // Blocker
 
     list.count = 0;
-    generate_all_pawn_legal_moves(&board, &list);
+    generate_all_pawn_pseudo_legal_moves(&board, &list);
 
     // Move 1: D4 captures E5 (Capture)
     // Move 2: D5 moves to D6 (Quiet)
@@ -59,7 +59,7 @@ static  int test_pawn_move_generation() {
     place_piece_on_sq(&board, WHITE_PAWN, SQ_C5);
 
     list.count = 0;
-    generate_all_pawn_legal_moves(&board, &list);
+    generate_all_pawn_pseudo_legal_moves(&board, &list);
 
     // Expected Moves (4 Total):
     // 1. e5-e6 (Quiet)
@@ -84,7 +84,7 @@ static  int test_pawn_move_generation() {
     place_piece_on_sq(&board, BLACK_ROOK, SQ_A8);
 
     list.count = 0;
-    generate_all_pawn_legal_moves(&board, &list);
+    generate_all_pawn_pseudo_legal_moves(&board, &list);
 
     // 4 quiet promos (b7b8) + 4 capture promos (b7xa8) = 8 moves
     ASSERT_INT_EQ(8, list.count, "White Promotion Count");
@@ -99,7 +99,7 @@ static  int test_pawn_move_generation() {
     place_piece_on_sq(&board, WHITE_PAWN, SQ_H1); // Trap piece
 
     list.count = 0;
-    generate_all_pawn_legal_moves(&board, &list);
+    generate_all_pawn_pseudo_legal_moves(&board, &list);
 
     // Should only have 4 quiet promos (a2a1). Capture on h1 is illegal wrap.
     ASSERT_INT_EQ(4, list.count, "Black File Wrap Check");

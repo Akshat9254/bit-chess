@@ -22,6 +22,7 @@ static const U16 MVV_LVA_SCORES[] = {
 };
 
 static int negamax(Board *board, U8 depth, int alpha, int beta);
+static int quiescence(Board *board, int alpha, int beta);
 static void sort_next_move(MoveList *move_list, size_t current_index);
 static void assign_move_scores(const Board *board, Move best_move, MoveList *legal_moves);
 
@@ -117,7 +118,7 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
     }
 
     if (depth == 0) {
-        return eval(board);
+        return quiescence(board, alpha, beta);
     }
 
     MoveList legal_moves = {0};
@@ -133,7 +134,7 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
     int best_score = -INF;
     Move best_move = MOVE_NONE;
     assign_move_scores(board, hash_move, &legal_moves);
-    int old_alpha = alpha;
+    const int old_alpha = alpha;
 
     for (size_t i = 0; i < legal_moves.count; i++) {
         sort_next_move(&legal_moves, i);
@@ -181,6 +182,56 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
     }
 
     return best_score;
+}
+
+static int quiescence(Board *board, int alpha, const int beta) {
+    if ((search_info.nodes++ & 2047) == 0) {
+        if (get_time_ms() - search_info.start_time >= search_info.hard_limit) {
+            search_info.aborted = true;
+        }
+    }
+
+    if (search_info.aborted) {
+        return 0;
+    }
+
+    const int stand_pat = eval(board);
+    if (stand_pat >= beta) {
+        return beta;
+    }
+
+    if (stand_pat > alpha) {
+        alpha = stand_pat;
+    }
+
+    MoveList capture_moves = {0};
+    generate_all_legal_capture_moves(board, &capture_moves);
+
+    assign_move_scores(board, MOVE_NONE, &capture_moves);
+
+    for (size_t i = 0; i < capture_moves.count; i++) {
+        sort_next_move(&capture_moves, i);
+        StateInfo state = {0};
+        make_move(board, capture_moves.moves[i], &state);
+
+        const int score = -quiescence(board, -beta, -alpha);
+
+        unmake_move(board, &state);
+
+        if (search_info.aborted) {
+            return 0;
+        }
+
+        if (score >= beta) {
+            return beta;
+        }
+
+        if (score > alpha) {
+            alpha = score;
+        }
+    }
+
+    return alpha;
 }
 
 void sort_next_move(MoveList *move_list, const size_t current_index) {
