@@ -72,4 +72,10 @@ typedef enum: U8 {
     CASTLE_ANY = CASTLE_WHITE_ANY | CASTLE_BLACK_ANY // 1111
 } CastlingRights;
 
+enum {
+    VALUE_INF = 100000,
+    VALUE_MATE = 30000,
+    VALUE_MATE_THRESHOLD = 29000
+};
+
 #endif

@@ -8,8 +8,6 @@
 
 SearchInfo search_info;
 
-static const int INF = 100000;
-static const int MATE_VALUE = 30000;
 static const U16 MVV_LVA_CAPTURE_MOVE_OFFSET = 10000;
 
 static const U16 MVV_LVA_SCORES[] = {
@@ -21,7 +19,7 @@ static const U16 MVV_LVA_SCORES[] = {
     [PT_KING]   = 6,
 };
 
-static int negamax(Board *board, U8 depth, int alpha, int beta);
+static int negamax(Board *board, U8 depth, U8 ply, int alpha, int beta);
 static int quiescence(Board *board, int alpha, int beta);
 static void sort_next_move(MoveList *move_list, size_t current_index);
 static void assign_move_scores(const Board *board, Move best_move, MoveList *legal_moves);
@@ -37,11 +35,16 @@ Move search_for_best_move(Board *board) {
         MoveList legal_moves = {0};
         generate_all_legal_moves(board, &legal_moves);
 
-        assign_move_scores(board, best_move, &legal_moves);
+        int tt_dummy_score;
+        Move tt_move = MOVE_NONE;
+        tt_lookup(board->hash, depth, 0, -VALUE_INF, VALUE_INF, &tt_dummy_score, &tt_move);
+        const Move best_move_to_prioritize = best_move == MOVE_NONE ? tt_move : best_move;
+
+        assign_move_scores(board, best_move_to_prioritize, &legal_moves);
 
         Move best_move_in_this_itr = MOVE_NONE;
-        int alpha = -INF;
-        const int beta = INF;
+        int alpha = -VALUE_INF;
+        const int beta = VALUE_INF;
 
         for (size_t i = 0; i < legal_moves.count; i++) {
             sort_next_move(&legal_moves, i);
@@ -50,7 +53,7 @@ Move search_for_best_move(Board *board) {
             const Move move = legal_moves.moves[i];
 
             make_move(board, move, &state);
-            const int score = -negamax(board, depth - 1, -beta, -alpha);
+            const int score = -negamax(board, depth - 1, 1, -beta, -alpha);
             unmake_move(board, &state);
 
             if (search_info.aborted) {
@@ -65,15 +68,6 @@ Move search_for_best_move(Board *board) {
 
         if (!search_info.aborted) {
             best_move = best_move_in_this_itr;
-            const TTEntry new_entry = {
-                .hash = board->hash,
-                .score = alpha,
-                .move = best_move,
-                .depth = depth,
-                .score_type = TT_EXACT,
-            };
-
-            tt[tt_index_from_hash(board->hash)] = new_entry;
         }
 
         if (get_time_ms() - search_info.start_time >= search_info.soft_limit) {
@@ -84,7 +78,7 @@ Move search_for_best_move(Board *board) {
     return best_move;
 }
 
-static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
+static int negamax(Board *board, const U8 depth, const U8 ply, int alpha, const int beta) {
     if ((search_info.nodes++ & 2047) == 0) {
         if (get_time_ms() - search_info.start_time >= search_info.hard_limit) {
             search_info.aborted = true;
@@ -95,26 +89,11 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
         return 0;
     }
 
-    const size_t tt_index = tt_index_from_hash(board->hash);
-    const TTEntry *entry = &tt[tt_index];
+    int tt_score = 0;
+    Move tt_move = MOVE_NONE;
 
-    Move hash_move = MOVE_NONE;
-    if (entry->hash == board->hash) {
-        hash_move = entry->move;
-
-        if (entry->depth >= depth) {
-            if (entry->score_type == TT_EXACT) {
-                return entry->score;
-            }
-
-            if (entry->score_type == TT_LOWER && entry->score >= beta) {
-                return entry->score;
-            }
-
-            if (entry->score_type == TT_UPPER && entry->score <= alpha) {
-                return entry->score;
-            }
-        }
+    if (tt_lookup(board->hash, depth, ply, alpha, beta, &tt_score, &tt_move)) {
+        return tt_score;
     }
 
     if (depth == 0) {
@@ -126,14 +105,14 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
 
     if (legal_moves.count == 0) {
         if (is_king_in_check(board, board->side_to_move)) {
-            return -MATE_VALUE - depth;
+            return -VALUE_MATE + ply;
         }
         return 0;
     }
 
-    int best_score = -INF;
+    int best_score = -VALUE_INF;
     Move best_move = MOVE_NONE;
-    assign_move_scores(board, hash_move, &legal_moves);
+    assign_move_scores(board, tt_move, &legal_moves);
     const int old_alpha = alpha;
 
     for (size_t i = 0; i < legal_moves.count; i++) {
@@ -141,7 +120,7 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
 
         StateInfo state = {0};
         make_move(board, legal_moves.moves[i], &state);
-        const int score = -negamax(board, depth - 1, -beta, -alpha);
+        const int score = -negamax(board, depth - 1, ply + 1, -beta, -alpha);
         unmake_move(board, &state);
 
         if (search_info.aborted) {
@@ -162,23 +141,8 @@ static int negamax(Board *board, const U8 depth, int alpha, const int beta) {
         }
     }
 
-    if (entry->hash != board->hash || depth >= entry->depth) {
-        TTEntry new_entry = {
-            .hash = board->hash,
-            .score = best_score,
-            .move = best_move,
-            .depth = depth,
-        };
-
-        if (best_score >= beta) {
-            new_entry.score_type = TT_LOWER;
-        } else if (best_score <= old_alpha) {
-            new_entry.score_type = TT_UPPER;
-        } else {
-            new_entry.score_type = TT_EXACT;
-        }
-
-        tt[tt_index] = new_entry;
+    if (!search_info.aborted) {
+        tt_store(board->hash, depth, ply, old_alpha, beta, best_score, best_move);
     }
 
     return best_score;
@@ -256,7 +220,7 @@ void assign_move_scores(const Board *board, const Move best_move, MoveList *lega
         const U8 flags = move_get_flags(move);
 
         if (move == best_move) {
-            legal_moves->scores[i] = (U16) INF;
+            legal_moves->scores[i] = (U16) VALUE_INF;
         } else if (is_capture(flags)) {
             const Piece attacker = board->mailbox[from];
             const Piece victim = board->mailbox[to];
