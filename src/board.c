@@ -1,8 +1,7 @@
 #include <assert.h>
-#include <string.h>
+#include <stdio.h>
 
 #include "board.h"
-
 #include "fen_parser.h"
 #include "leaper_attack_tables.h"
 #include "magic_attack_tables.h"

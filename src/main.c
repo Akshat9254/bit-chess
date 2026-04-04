@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <string.h>
+#include <stdio.h>
 
 #include "fen_parser.h"
 #include "move.h"

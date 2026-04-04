@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdio.h>
 
 #include "bitboard.h"
 #include "square.h"

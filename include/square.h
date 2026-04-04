@@ -2,7 +2,7 @@
 #define SQUARE_H
 
 #include <assert.h>
-#include <stdio.h>
+#include <string.h>
 
 #include "types.h"
 
@@ -45,13 +45,17 @@ static inline File char_to_file(const char file) {
 }
 
 static inline Square rank_file_to_sq(const Rank rank, const File file) {
-    if (!is_rank_file_on_board(rank, file)) {
-        printf("invalid rank: %d, file: %d\n", rank, file);
-    }
-    assert(is_rank_file_on_board(rank, file));
+	assert(is_rank_file_on_board(rank, file));
     const Square sq = (Square) (rank * FILE_NB + file);
     assert(is_sq_on_board(sq));
     return sq;
+}
+
+static inline Square string_to_sq(const char *str) {
+	assert(strlen(str) >= 2);
+	const File file = char_to_file(str[0]);
+	const Rank rank = char_to_rank(str[1]);
+	return rank_file_to_sq(rank, file);
 }
 
 #endif

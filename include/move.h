@@ -1,8 +1,7 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include <stddef.h>
-
+#include "board.h"
 #include "piece.h"
 #include "types.h"
 
@@ -36,6 +35,11 @@ enum: U8 {
     MOVE_PROMO_Q_CAP        = 15,   // 1111
 } MoveFlags;
 
+enum: U8 {
+    MOVE_MASK_CAP    = 0x4,
+    MOVE_MASK_PROMO  = 0x8
+};
+
 typedef struct {
     size_t count;
     Move moves[MAX_MOVES];
@@ -43,6 +47,8 @@ typedef struct {
 } MoveList;
 
 void move_to_string(Move move, Color color, char *str, size_t size);
+
+Move move_from_string(const char *str, const Board *board);
 
 static inline Move create_move(const Square from, const Square to, const U8 flags) {
     return (Move) (from | (to << 6) | (flags << 12));
@@ -61,11 +67,11 @@ static inline U8 move_get_flags(const Move move) {
 }
 
 static inline bool is_capture(const U8 flags) {
-    return (flags & 0x4);
+    return (flags & MOVE_MASK_CAP);
 }
 
 static inline bool is_promo(const U8 flags) {
-    return (flags & 0x8);
+    return (flags & MOVE_MASK_PROMO);
 }
 
 static inline bool is_castle(const U8 flags) {

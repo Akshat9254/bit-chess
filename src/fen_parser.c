@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdio.h>
 
 #include "castling_rights.h"
 #include "fen_parser.h"
