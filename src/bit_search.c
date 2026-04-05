@@ -1,4 +1,4 @@
-#include "search.h"
+#include "bit_search.h"
 
 #include "eval.h"
 #include "move.h"
@@ -25,13 +25,9 @@ static void sort_next_move(MoveList *move_list, size_t current_index);
 static void assign_move_scores(const Board *board, Move best_move, MoveList *legal_moves);
 
 Move search_for_best_move(Board *board) {
-    search_info.start_time = get_time_ms();
-    search_info.nodes = 0;
-    search_info.aborted = false;
-
     Move best_move = MOVE_NONE;
 
-    for (U8 depth = 1; depth <= MAX_DEPTH; depth++) {
+    for (U32 depth = 1; depth <= search_info.depth; depth++) {
         MoveList legal_moves = {0};
         generate_all_legal_moves(board, &legal_moves);
 
@@ -68,6 +64,22 @@ Move search_for_best_move(Board *board) {
 
         if (!search_info.aborted) {
             best_move = best_move_in_this_itr;
+
+            U64 elapsed = get_time_ms() - search_info.start_time;
+            if (elapsed == 0) elapsed = 1;
+            const U64 nps = (search_info.nodes * 1000) / elapsed;
+            char move_str[6] = {0};
+            move_to_string(best_move, board->side_to_move, move_str, 6);
+
+            printf("info depth %u score cp %d nodes %llu time %llu nps %llu pv %s\n",
+                   depth,
+                   alpha,
+                   search_info.nodes,
+                   elapsed,
+                   nps,
+                   move_str);
+
+            fflush(stdout);
         }
 
         if (get_time_ms() - search_info.start_time >= search_info.soft_limit) {

@@ -119,7 +119,7 @@ static  int test_knight_move_generation() {
     place_piece_on_sq(&board, WHITE_KNIGHT, SQ_E4);
 
     list.count = 0;
-    generate_all_knight_legal_moves(&board, &list);
+    generate_all_knight_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(8, list.count, "Knight at e4 move count");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_E4, SQ_F6, MOVE_QUIET), "e4-f6 exists");
@@ -132,7 +132,7 @@ static  int test_knight_move_generation() {
     place_piece_on_sq(&board, WHITE_KNIGHT, SQ_A1);
 
     list.count = 0;
-    generate_all_knight_legal_moves(&board, &list);
+    generate_all_knight_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(2, list.count, "Knight at a1 move count");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_A1, SQ_B3, MOVE_QUIET), "a1-b3 exists");
@@ -148,7 +148,7 @@ static  int test_knight_move_generation() {
     place_piece_on_sq(&board, BLACK_PAWN, SQ_E6);   // Target
 
     list.count = 0;
-    generate_all_knight_legal_moves(&board, &list);
+    generate_all_knight_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     // Total should be 7 (8 possible - 1 blocked + 0 for the pawn itself since we only call knight gen)
     ASSERT_INT_EQ(7, list.count, "Knight blockage test count");
@@ -163,7 +163,7 @@ static  int test_knight_move_generation() {
     place_piece_on_sq(&board, WHITE_KNIGHT, SQ_G1);
 
     list.count = 0;
-    generate_all_knight_legal_moves(&board, &list);
+    generate_all_knight_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     // Each knight has 3 moves from the back rank (total 6)
     ASSERT_INT_EQ(6, list.count, "Two knights start rank count");
@@ -182,7 +182,7 @@ static int test_bishop_move_generation() {
     place_piece_on_sq(&board, WHITE_BISHOP, SQ_D4);
 
     list.count = 0;
-    generate_all_bishop_legal_moves(&board, &list);
+    generate_all_bishop_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(13, list.count, "Bishop at d4 empty board count");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_D4, SQ_A1, MOVE_QUIET), "d4-a1 exists");
@@ -199,7 +199,7 @@ static int test_bishop_move_generation() {
     place_piece_on_sq(&board, BLACK_PAWN, SQ_B6);   // Enemy Target
 
     list.count = 0;
-    generate_all_bishop_legal_moves(&board, &list);
+    generate_all_bishop_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     // NW: c5 (Quiet), b6 (Capture) -> 2 moves
     // NE: e5 (Quiet) -> 1 move
@@ -219,7 +219,7 @@ static int test_bishop_move_generation() {
     place_piece_on_sq(&board, WHITE_BISHOP, SQ_A1);
 
     list.count = 0;
-    generate_all_bishop_legal_moves(&board, &list);
+    generate_all_bishop_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(7, list.count, "Bishop at a1 move count");
 
@@ -237,7 +237,7 @@ static int test_rook_move_generation() {
     place_piece_on_sq(&board, WHITE_ROOK, SQ_D4);
 
     list.count = 0;
-    generate_all_rook_legal_moves(&board, &list);
+    generate_all_rook_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(14, list.count, "Rook at d4 empty board count");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_D4, SQ_D1, MOVE_QUIET), "d4-d1 exists");
@@ -257,7 +257,7 @@ static int test_rook_move_generation() {
     place_piece_on_sq(&board, BLACK_PAWN, SQ_F4);   // Enemy Target (East)
 
     list.count = 0;
-    generate_all_rook_legal_moves(&board, &list);
+    generate_all_rook_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     // Vertical (File D): 7 moves (open)
     // Horizontal West: c4 (Quiet) -> 1 move
@@ -276,7 +276,7 @@ static int test_rook_move_generation() {
     place_piece_on_sq(&board, WHITE_ROOK, SQ_A1);
 
     list.count = 0;
-    generate_all_rook_legal_moves(&board, &list);
+    generate_all_rook_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(14, list.count, "Rook at a1 move count");
 
@@ -294,7 +294,7 @@ static int test_queen_move_generation() {
     place_piece_on_sq(&board, WHITE_QUEEN, SQ_D4);
 
     list.count = 0;
-    generate_all_queen_legal_moves(&board, &list);
+    generate_all_queen_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(27, list.count, "Queen at d4 empty board count");
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_D4, SQ_D8, MOVE_QUIET), "d4-d8 (Rook-like) exists");
@@ -312,7 +312,7 @@ static int test_queen_move_generation() {
     place_piece_on_sq(&board, BLACK_PAWN, SQ_F6);   // Enemy Target (Northeast)
 
     list.count = 0;
-    generate_all_queen_legal_moves(&board, &list);
+    generate_all_queen_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     // Vertical North: d5 (Quiet) -> 1 move
     // Northeast: e5 (Quiet), f6 (Capture) -> 2 moves
@@ -330,7 +330,7 @@ static int test_queen_move_generation() {
     place_piece_on_sq(&board, WHITE_QUEEN, SQ_A1);
 
     list.count = 0;
-    generate_all_queen_legal_moves(&board, &list);
+    generate_all_queen_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_INT_EQ(21, list.count, "Queen at a1 move count");
 
@@ -347,7 +347,7 @@ static int test_king_move_generation() {
     board.castling_rights = CASTLE_NONE;
     place_piece_on_sq(&board, WHITE_KING, SQ_E4);
     list.count = 0;
-    generate_all_king_legal_moves(&board, &list);
+    generate_all_king_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
     ASSERT_INT_EQ(8, list.count, "King at e4 count");
 
     // --- CASE 2: Castling Rights + Blocked Path ---
@@ -358,7 +358,7 @@ static int test_king_move_generation() {
     place_piece_on_sq(&board, WHITE_KING, SQ_E1);
     place_piece_on_sq(&board, WHITE_BISHOP, SQ_F1);
     list.count = 0;
-    generate_all_king_legal_moves(&board, &list);
+    generate_all_king_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     // Should have normal moves (d1, d2, e2, f2) but NOT castling
     ASSERT_BOOL_EQ(false, has_move(&list, SQ_E1, SQ_G1, MOVE_KING_CASTLE), "No castle through pieces");
@@ -371,7 +371,7 @@ static int test_king_move_generation() {
     place_piece_on_sq(&board, WHITE_KING, SQ_E1);
     place_piece_on_sq(&board, BLACK_ROOK, SQ_F8); // Attacks f1
     list.count = 0;
-    generate_all_king_legal_moves(&board, &list);
+    generate_all_king_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_BOOL_EQ(false, has_move(&list, SQ_E1, SQ_G1, MOVE_KING_CASTLE), "No castle through check");
 
@@ -384,7 +384,7 @@ static int test_king_move_generation() {
     place_piece_on_sq(&board, BLACK_BISHOP, SQ_G6); // Attacks B1 via diagonal
 
     list.count = 0;
-    generate_all_king_legal_moves(&board, &list);
+    generate_all_king_pseudo_legal_moves(&board, &list, ~board.occupied[board.side_to_move]);
 
     ASSERT_BOOL_EQ(true, has_move(&list, SQ_E1, SQ_C1, MOVE_QUEEN_CASTLE), "Castle allowed if B1 attacked");
 

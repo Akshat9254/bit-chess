@@ -1,4 +1,5 @@
-#include <_inttypes.h>
+#include <stdio.h>
+#include <inttypes.h>
 
 #include "bitboard.h"
 

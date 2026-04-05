@@ -2,6 +2,7 @@
 #define TEST_UTIL_H
 
 #include <inttypes.h>
+#include <stdio.h>
 #include <string.h>
 
 /**
