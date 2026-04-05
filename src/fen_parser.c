@@ -44,11 +44,6 @@ bool fen_init_board(Board *board, const char *fen, FenError *fen_error) {
 
     if (!parse_full_move_number(board, &p, fen_error)) return false;
 
-    if (*p != '\0') {
-        set_error(fen_error, FEN_ERR_INVALID_TERMINATOR, "Missing terminator after full move number");
-        return false;
-    }
-
     set_error(fen_error, FEN_OK, "Success");
     return true;
 }

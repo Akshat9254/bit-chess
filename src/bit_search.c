@@ -1,5 +1,4 @@
 #include "bit_search.h"
-
 #include "eval.h"
 #include "move.h"
 #include "movegen.h"

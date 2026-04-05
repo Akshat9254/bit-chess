@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 
 #include "uci.h"
@@ -8,11 +9,33 @@
 
 StateInfo state_info;
 
-static void set_time_limits(const Board *board, int wtime, int winc, int btime, int binc, int move_time, U8 moves_to_go);
+typedef struct {
+    pthread_t thread_id;
+    pthread_mutex_t lock;
+    pthread_cond_t cond;
+    bool running;
+    bool stopped;
+    Board *board;
+} SearchWorker;
 
-void uci_loop(Board *board) {
+SearchWorker search_worker;
+
+static void set_time_limits(const Board *board, int wtime, int winc, int btime, int binc, int move_time, U8 moves_to_go);
+static void* search_worker_loop(void *arg);
+static void stop_search(void);
+
+void uci_init(Board *board) {
+    search_worker.running = false;
+    search_worker.stopped = false;
+    search_worker.board = board;
+    pthread_mutex_init(&search_worker.lock, nullptr);
+    pthread_cond_init(&search_worker.cond, nullptr);
+    pthread_create(&search_worker.thread_id, nullptr, search_worker_loop, nullptr);
+}
+
+void uci_loop() {
+    const Board *board = search_worker.board;
     char line[2048];
-    setbuf(stdout, nullptr);
 
     while (fgets(line, sizeof(line), stdin) != NULL) {
         if (strncmp(line, "uci", 3) == 0) {
@@ -22,14 +45,26 @@ void uci_loop(Board *board) {
         } else if (strncmp(line, "isready", 5) == 0) {
             printf("readyok\n");
         } else if (strncmp(line, "position", 8) == 0) {
-            parse_position(board, line);
+            stop_search();
+            parse_position(search_worker.board, line);
         } else if (strncmp(line, "go", 2) == 0) {
+            stop_search();
             parse_go(board, line);
         } else if (strncmp(line, "d", 1) == 0) {
             print_board(board);
         } else if (strncmp(line, "stop", 4) == 0) {
             search_info.aborted = true;
         } else if (strncmp(line, "quit", 4) == 0) {
+            stop_search();
+
+            pthread_mutex_lock(&search_worker.lock);
+            search_worker.stopped = true;
+            pthread_cond_signal(&search_worker.cond);
+            pthread_mutex_unlock(&search_worker.lock);
+
+            pthread_join(search_worker.thread_id, nullptr);
+            pthread_mutex_destroy(&search_worker.lock);
+            pthread_cond_destroy(&search_worker.cond);
             break;
         }
 
@@ -75,7 +110,7 @@ void parse_position(Board *board, const char *line) {
     }
 }
 
-void parse_go(Board *board, const char *line) {
+void parse_go(const Board *board, const char *line) {
     int wtime = -1, winc = 0;
     int btime = -1, binc = 0;
     U32 depth = MAX_DEPTH;
@@ -117,15 +152,16 @@ void parse_go(Board *board, const char *line) {
     }
 
     set_time_limits(board, wtime, winc, btime, binc, move_time, moves_to_go);
+
+    pthread_mutex_lock(&search_worker.lock);
     search_info.depth = depth;
     search_info.start_time = get_time_ms();
     search_info.nodes = 0;
     search_info.aborted = false;
+    search_worker.running = true;
 
-    const Move best_move = search_for_best_move(board);
-    char move_str[6] = {0};
-    move_to_string(best_move, board->side_to_move, move_str, 6);
-    printf("bestmove %s\n", move_str);
+    pthread_cond_signal(&search_worker.cond);
+    pthread_mutex_unlock(&search_worker.lock);
 }
 
 static void set_time_limits(const Board *board, const int wtime, const int winc,
@@ -154,4 +190,45 @@ static void set_time_limits(const Board *board, const int wtime, const int winc,
 
     search_info.soft_limit = 1 << 30;
     search_info.hard_limit = 1 << 30;
+}
+
+static void* search_worker_loop(__attribute__((unused)) void *arg) {
+    while (true) {
+        pthread_mutex_lock(&search_worker.lock);
+
+        while (!search_worker.running && !search_worker.stopped) {
+            pthread_cond_wait(&search_worker.cond, &search_worker.lock);
+        }
+
+        if (search_worker.stopped) {
+            pthread_mutex_unlock(&search_worker.lock);
+            break;
+        }
+
+        pthread_mutex_unlock(&search_worker.lock);
+
+        const Move best_move = search_for_best_move(search_worker.board);
+        char move_str[6] = {0};
+        move_to_string(best_move, search_worker.board->side_to_move, move_str, 6);
+        printf("bestmove %s\n", move_str);
+        fflush(stdout);
+
+        pthread_mutex_lock(&search_worker.lock);
+        search_worker.running = false;
+        pthread_cond_signal(&search_worker.cond);
+        pthread_mutex_unlock(&search_worker.lock);
+    }
+
+    return nullptr;
+}
+
+static void stop_search(void) {
+    search_info.aborted = true;
+
+    pthread_mutex_lock(&search_worker.lock);
+    while (search_worker.running) {
+        pthread_cond_wait(&search_worker.cond, &search_worker.lock);
+    }
+
+    pthread_mutex_unlock(&search_worker.lock);
 }

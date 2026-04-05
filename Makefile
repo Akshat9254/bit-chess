@@ -51,8 +51,11 @@ DEBUG_FLAGS := $(COMMON_FLAGS) -O1 -g3 -DDEBUG -fsanitize=address,undefined \
                -fno-omit-frame-pointer -fstack-protector-strong
 DEBUG_LDFLAGS := -fsanitize=address,undefined
 
-RELEASE_FLAGS := $(COMMON_FLAGS) -O3 -DNDEBUG -march=native -flto -fomit-frame-pointer
-RELEASE_LDFLAGS := -flto
+RELEASE_FLAGS := $(COMMON_FLAGS) -O3 -DNDEBUG \
+                -mcpu=apple-m1 -flto=full \
+                -fomit-frame-pointer -funroll-loops \
+                -fstrict-aliasing
+RELEASE_LDFLAGS := -flto=full
 
 # Default to Debug for development
 CFLAGS  ?= $(DEBUG_FLAGS)
@@ -64,6 +67,8 @@ LDFLAGS ?= $(DEBUG_LDFLAGS)
 .DEFAULT_GOAL := all
 .PHONY: all build clean run debug test tools help
 
+all build: CFLAGS = $(RELEASE_FLAGS)
+all build: LDFLAGS = $(RELEASE_LDFLAGS)
 all build: $(BIN)
 
 $(BIN): $(LIB_OBJS) $(MAIN_OBJ)
